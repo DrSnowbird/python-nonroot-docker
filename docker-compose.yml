@@ -1,0 +1,17 @@
+version: '3' 
+services:
+  python-non-root:
+    image: openkbs/python-non-root
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: python-non-root
+    environment:
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
+    env_file:
+      - .env
+    volumes:
+      - ./data:/home/developer/data
+      - ./workspace:/home/developer/workspace
+
