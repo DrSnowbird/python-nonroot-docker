@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/bash -x
 
-set -e
+#set -e
 
 whoami
 
@@ -13,10 +13,10 @@ echo "Inputs: $*"
 ############################################
 CMD_PATTERN=""
 
-#### ------------------------------------------------------------------------
-#### ---- Extra line added in the script to run all command line arguments
-#### ---- To keep the docker process staying alive if needed.
-#### ------------------------------------------------------------------------
+############################################
+#### ---- set up virutalenv here:  ---- ####
+############################################
+
 set -v
 if [ $# -gt 0 ]; then
 
