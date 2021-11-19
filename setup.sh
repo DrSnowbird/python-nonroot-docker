@@ -15,7 +15,6 @@ PROGRAM_TYPE="py"
 # Run the Application:
 #   ./setup.sh
 # -------------------------------
-
 set -e
 env
 
