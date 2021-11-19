@@ -1,40 +1,37 @@
-#!/bin/bash -x
+#!/bin/bash
+#
+# docker-entrypoint.sh
+#
+# The Dockerfile CMD, or any "docker run" command option, gets
+# passed as command-line arguments to this script.
 
-#set -e
+# Abort on any error (good shell hygiene)
+set -e
 
-whoami
+env
 
-env | sort
+APP_MAIN=${APP_MAIN:-setup.sh}
 
-echo "Inputs: $*"
-
-############################################
-#### ---- set command pattern here ---- ####
-############################################
-CMD_PATTERN=""
-
-############################################
-#### ---- set up virutalenv here:  ---- ####
-############################################
-
-set -v
-if [ $# -gt 0 ]; then
-
-    ############################################
-    #### 1.) Setup needed stuffs, e.g., init db etc. ....
-    #### (do something here for preparation)
-    ############################################
-
-    if [ "${CMD_PATTERN}" != "" ] && [[ $1 =~ "${CMD_PATTERN}" ]]; then
-        echo ">>>> Seen command: ${CMD_PATTERN} : ... wait indefinitely ..."
-        $@
+base_app=$(basename $APP_MAIN)
+find_app_main=`find $HOME -name $base_app -print | head -n 1`
+if [ "${find_app_main}" != "" ]; then
+    APP_MAIN=${find_app_main}
+    echo "--- Found the actual location of APP_MAIN: ${APP_MAIN}"
+    # If we're running "myAppName", provide default options
+    if [ "$(basename $1)" = "$(basename $APP_MAIN)" ]; then
+        echo ">> Running: ${APP_MAIN}"
+        shift 1
+        # Then run it with default options plus whatever else
+        # was given in the command
+        exec ${APP_MAIN} $@
         tail -f /dev/null
     else
-        echo ">>>> Not Seen command: ${CMD_PATTERN} : ... continue"
-        $@
+       # Otherwise just run what was given in the command
+       echo ">> Running: $@"
+       $@
     fi
-
 else
-    /bin/bash
+    echo "--- APP_MAIN not found ..."
+    $@
 fi
 

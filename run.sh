@@ -14,11 +14,36 @@ if [ $# -lt 1 ]; then
     echo "--------------------------------------------------------"
 fi
 
+###########################################################################
+#### ---- RUN Configuration (CHANGE THESE if needed!!!!)           --- ####
+###########################################################################
+## ------------------------------------------------------------------------
+## Valid "BUILD_TYPE" values: 
+##    0: (default) has neither X11 nor VNC/noVNC container build image type
+##    1: X11/Desktip container build image type
+##    2: VNC/noVNC container build image type
+## ------------------------------------------------------------------------
+BUILD_TYPE=0
+
 ###################################################
 #### ---- Parse Command Line Arguments:  ---- #####
 ###################################################
 IS_TO_RUN_CPU=0
 IS_TO_RUN_GPU=1
+
+
+RESTART_OPTION_VALUES=" no on-failure unless-stopped always "
+RESTART_OPTION=${RESTART_OPTION:-no}
+
+## ------------------------------------------------------------------------
+## Valid "RUN_TYPE" values: 
+##    0: (default) Interactive Container -
+##       ==> Best for Debugging Use
+##    1: Detach Container / Non-Interactive 
+##       ==> Usually, when not in debugging mode anymore, then use 1 as choice.
+##       ==> Or, your frequent needs of the container for DEV environment Use.
+## ------------------------------------------------------------------------
+RUN_OPTION=${RUN_OPTION:-" -it "}
 
 PARAMS=""
 while (( "$#" )); do
@@ -34,6 +59,30 @@ while (( "$#" )); do
       IS_TO_RUN_GPU=1
       GPU_OPTION=" --gpus all "
       shift
+      ;;
+    -d|--detach)
+      RUN_OPTION=" -d "
+      shift
+      ;;
+    -it)
+      RUN_OPTION=" -it "
+      shift
+      ;;
+    -t|--imageTag)
+      imageTag=$2
+      shift 2
+      ;;
+    -r|--restart)
+      ## Valid "RESTART_OPTION" values:
+      ##  { no, on-failure, unless-stopped, always }
+      if [[ "${RESTART_OPTION_VALUES}" =~ .*" $2 ".* ]]; then
+          RESTART_OPTION=$2
+          shift 2
+      else
+          echo "--- INFO: -r|--restart options: { no, on-failure, unless-stopped, always }"
+          echo "--- default to 'always' "
+          RESTART_OPTION=unless-stopped
+      fi
       ;;
     -*|--*=) # unsupported flags
       echo "Error: Unsupported flag $1" >&2
@@ -51,41 +100,20 @@ eval set -- "$PARAMS"
 echo "-c (IS_TO_RUN_CPU): $IS_TO_RUN_CPU"
 echo "-g (IS_TO_RUN_GPU): $IS_TO_RUN_GPU"
 
+echo ">>> RUN_OPTION: ${RUN_OPTION}"
+echo ">>>> imageTag=${imageTag}"
+
+
 echo "remiaing args:"
-echo $*
-
-###########################################################################
-#### ---- RUN Configuration (CHANGE THESE if needed!!!!)           --- ####
-###########################################################################
-## ------------------------------------------------------------------------
-## Valid "BUILD_TYPE" values: 
-##    0: (default) has neither X11 nor VNC/noVNC container build image type
-##    1: X11/Desktip container build image type
-##    2: VNC/noVNC container build image type
-## ------------------------------------------------------------------------
-BUILD_TYPE=0
-
-## ------------------------------------------------------------------------
-## Valid "RUN_TYPE" values: 
-##    0: (default) Interactive Container -
-##       ==> Best for Debugging Use
-##    1: Detach Container / Non-Interactive 
-##       ==> Usually, when not in debugging mode anymore, then use 1 as choice.
-##       ==> Or, your frequent needs of the container for DEV environment Use.
-## ------------------------------------------------------------------------
-if [ "$1" = "-d" ]; then
-    RUN_TYPE=1
-    shift 1
-fi
-RUN_TYPE=${RUN_TYPE:-0}
+echo $@
 
 ## ------------------------------------------------------------------------
 ## -- Container 'hostname' use: 
-## -- Default= 2 (use HOST_IP)
+## -- Default= 1 (use HOST_IP)
 ## -- 1: HOST_IP
 ## -- 2: HOST_NAME
 ## ------------------------------------------------------------------------
-HOST_USE_IP_OR_NAME=${HOST_USE_IP_OR_NAME:-2}
+HOST_USE_IP_OR_NAME=${HOST_USE_IP_OR_NAME:-1}
 
 ########################################
 #### ---- NVIDIA GPU Checking: ---- ####
@@ -124,6 +152,12 @@ function check_NVIDIA() {
     fi
 }
 check_NVIDIA
+#### ---- NVIDIA Docker run recommendations: ----
+# NOTE: The SHMEM allocation limit is set to the default of 64MB.  This may be
+#   insufficient for PyTorch.  NVIDIA recommends the use of the following flags:
+#   docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 ...
+# -ipc=host --ulimit memlock=-1 --ulimit stack=67108864
+GPU_OPTION="${GPU_OPTION} --ulimit memlock=-1 --ulimit stack=67108864 "
 echo "GPU_OPTION= ${GPU_OPTION}"
 
 echo "$@"
@@ -137,21 +171,15 @@ echo "$@"
 USER_VARS_NEEDED=0
 
 ## ------------------------------------------------------------------------
-## Valid "RESTART_OPTION" values:
-##  { no, on-failure, unless-stopped, always }
-## ------------------------------------------------------------------------
-if [ "$1" = "-a" ] && [ "${RUN_TYPE}" = "1" ] ; then
-    RESTART_OPTION=always
-    shift 1
-fi
-RESTART_OPTION=${RESTART_OPTION:-no}
-
-## ------------------------------------------------------------------------
 ## More optional values:
 ##   Add any additional options here
 ## ------------------------------------------------------------------------
 #MORE_OPTIONS="--privileged=true"
 MORE_OPTIONS=""
+
+## -- IPC Host, Shm
+#MISC_OPTIONS="--ipc=host --shm-size 4g"
+MISC_OPTIONS="--ipc=host "
 
 ## ------------------------------------------------------------------------
 ## Multi-media optional values:
@@ -180,46 +208,6 @@ if [ "${RESTART_OPTION}" != "no" ]; then
     REMOVE_OPTION=""
 fi
 
-########################################
-#### ---- Usage for BUILD_TYPE ---- ####
-########################################
-function buildTypeUsage() {
-    echo "## ------------------------------------------------------------------------"
-    echo "## Valid BUILD_TYPE values: "
-    echo "##    0: (default) has neither X11 nor VNC/noVNC container build image type"
-    echo "##    1: X11/Desktip container build image type"
-    echo "##    2: VNC/noVNC container build image type"
-    echo "## ------------------------------------------------------------------------"
-}
-
-if [ "${BUILD_TYPE}" -lt 0 ] || [ "${BUILD_TYPE}" -gt 2 ]; then
-    buildTypeUsage
-    exit 1
-fi
-
-########################################
-#### ---- Validate RUN_TYPE    ---- ####
-########################################
- 
-RUN_OPTION=${RUN_OPTION:-" -it "}
-function validateRunType() {
-    case "${RUN_TYPE}" in
-        0 )
-            RUN_OPTION=" -it "
-            ;;
-        1 )
-            RUN_OPTION=" -d "
-            ;;
-        * )
-            echo "**** ERROR: Incorrect RUN_TYPE: ${RUN_TYPE} is used! Abort ****"
-            exit 1
-            ;;
-    esac
-}
-validateRunType
-echo "RUN_TYPE=${RUN_TYPE}"
-echo "RUN_OPTION=${RUN_OPTION}"
-echo "RESTART_OPTION=${RESTART_OPTION}"
 echo "REMOVE_OPTION=${REMOVE_OPTION}"
 
 ###########################################################################
@@ -227,7 +215,7 @@ echo "REMOVE_OPTION=${REMOVE_OPTION}"
 ###########################################################################
 
 ## -- (this script will include ./.env only if "./docker-run.env" not found
-DOCKER_ENV_FILE="./docker-run.env"
+DOCKER_ENV_FILE="./.env"
 
 ###########################################################################
 #### (Optional - to filter Environmental Variables for Running Docker)
@@ -237,11 +225,11 @@ ENV_VARIABLE_PATTERN=""
 ###################################################
 #### ---- Change this only to use your own ----
 ###################################################
-ORGANIZATION=openkbs
+ORGANIZATION=${ORGANIZATION:-openkbs}
 baseDataFolder="$HOME/data-docker"
 
 ###################################################
-#### ---- Detect Host OS Type and minor Tweek: ----
+#### **** Container package information ****
 ###################################################
 SED_MAC_FIX="''"
 CP_OPTION="--backup=numbered"
@@ -253,6 +241,7 @@ function get_HOST_IP() {
         HOST_NAME=`hostname -f`
         HOST_IP=`ip route get 1|grep via | awk '{print $7}'`
         SED_MAC_FIX=
+        echo -e ">>>> HOST_IP: ${HOST_IP}"
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         # Mac OSX
         HOST_NAME=`hostname -f`
@@ -274,7 +263,7 @@ HOST_NAME=${HOST_NAME:-localhost}
 #### **** Container package information ****
 ###################################################
 DOCKER_IMAGE_REPO=`echo $(basename $PWD)|tr '[:upper:]' '[:lower:]'|tr "/: " "_" `
-imageTag="${ORGANIZATION}/${DOCKER_IMAGE_REPO}"
+imageTag=${imageTag:-"${ORGANIZATION}/${DOCKER_IMAGE_REPO}"}
 #PACKAGE=`echo ${imageTag##*/}|tr "/\-: " "_"`
 PACKAGE="${imageTag##*/}"
 
@@ -460,13 +449,17 @@ function generateVolumeMapping() {
                         fi
                         checkHostVolumePath "${left}"
                     fi
+                    mkdir -p ${LOCAL_VOLUME_DIR}/${left}
+                    if [ $DEBUG -gt 0 ]; then ls -al ${LOCAL_VOLUME_DIR}/${left}; fi
                 fi
             fi
         else
             ## -- pattern like: "data"
             debug "-- default sub-directory (without prefix absolute path) --"
             VOLUME_MAP="${VOLUME_MAP} -v ${LOCAL_VOLUME_DIR}/$vol:${DOCKER_VOLUME_DIR}/$vol"
-            mkdir -p ${LOCAL_VOLUME_DIR}/$vol
+            if [ ! -s ${LOCAL_VOLUME_DIR}/$vol ]; then
+                mkdir -p ${LOCAL_VOLUME_DIR}/$vol
+            fi
             if [ $DEBUG -gt 0 ]; then ls -al ${LOCAL_VOLUME_DIR}/$vol; fi
         fi       
         echo ">>> expanded VOLUME_MAP: ${VOLUME_MAP}"
@@ -505,19 +498,31 @@ echo "PORT_MAP=${PORT_MAP}"
 ###################################################
 #### ---- Generate Environment Variables       ----
 ###################################################
-ENV_VARS=${ENV_VARS:-" -e HOST_IP=${HOST_IP}" }
-function generateEnvVars_v2() {
-    while read line; do
-        echo "Line=$line"
-        key=${line%=*}
-        value=${line#*=}
-        key=$(eval echo $value)
-        ENV_VARS="${ENV_VARS} -e ${line%=*}=$(eval echo $value)"
-    done < <(grep -E "^[[:blank:]]*$1.+[[:blank:]]*=[[:blank:]]*.+[[:blank:]]*" ${DOCKER_ENV_FILE} | grep -v "^#")
-    echo "ENV_VARS=$ENV_VARS"
+ENV_VARS=""
+function generateEnvVars2() {
+    key_list=`cat ${DOCKER_ENV_FILE} | grep -v "^#" |  grep -E "^[[:blank:]]*$1.+[[:blank:]]*=[[:blank:]]*.+[[:blank:]]*" |  awk 'BEGIN { FS = "=" } ; { print $1 }' `
+    echo "key_list=$key_list"
+    
+    for key in ${key_list}; do
+        echo ">>>> key=$key"
+        value=`cat ${DOCKER_ENV_FILE} | grep -v "^#" |grep "$key" |  grep -E "^[[:blank:]]*$1.+[[:blank:]]*=[[:blank:]]*.+[[:blank:]]*" | awk 'BEGIN { FS = "=" } ; { k=$1; $1=""; print $0}' `
+        echo "value=$value"
+        #value_trim="${value##+([[:space:]])}"
+        value_trim="`echo $value | sed 's/^[[:space:]]*//'`"
+        echo "$key=${value_trim}" 
+        ENV_VARS="${ENV_VARS} -e \"${key}=${value_trim}\""
+#        multi_words=`echo "$key"|grep APP_RUN_CMD`
+#        if [ "$multi_words" != "" ]; then
+#            ENV_VARS=$ENV_VARS" -e \"$key=$value_trim\""
+#            ENV_APP_RUN_CMD=" -e \"$key=$value_trim\""
+#        else
+#            ENV_VARS=$ENV_VARS" -e "$key="$value_trim"
+#        fi
+    done
 }
-generateEnvVars_v2
-echo ">> ENV_VARS=$ENV_VARS"
+generateEnvVars2
+echo "ENV_VARS=$ENV_VARS"
+echo "ENV_APP_RUN_CMD=$ENV_APP_RUN_CMD"
 
 function generateEnvVars() {
     if [ "${1}" != "" ]; then
@@ -529,15 +534,6 @@ function generateEnvVars() {
         #productEnvVars=`grep -E "^[[:blank:]]*$1[a-zA-Z0-9_]+[[:blank:]]*=[[:blank:]]*[a-zA-Z0-9_]+[[:blank:]]*" ${DOCKER_ENV_FILE}`
         productEnvVars=`grep -E "^[[:blank:]]*$1.+[[:blank:]]*=[[:blank:]]*.+[[:blank:]]*" ${DOCKER_ENV_FILE} | grep -v "^#"`
     fi
-    for vars in 
-        do
-        echo "Line=$line"
-        key=${line%=*}
-        value=${line#*=}
-        #key=$(eval echo $value)
-        #ENV_VARS="${ENV_VARS} -e ${line%=*}=$(eval echo $value)"
-        ENV_VARS="${ENV_VARS} -e ${line}"
-    done
     ENV_VARS_STRING=""
     for vars in ${productEnvVars// /}; do
         debug "Entry => $vars"
@@ -607,8 +603,8 @@ function generateProxyEnv() {
     fi
     ENV_VARS="${ENV_VARS} ${PROXY_PARAM}"
 }
-generateProxyEnv
-echo "ENV_VARS=${ENV_VARS}"
+#generateProxyEnv
+#echo "ENV_VARS=${ENV_VARS}"
 
 ###################################################
 #### ---- Function: Generate privilege String  ----
@@ -632,10 +628,9 @@ echo ${privilegedString}
 #### ---- Mostly, you don't need change below ----
 ###################################################
 function cleanup() {
-    containerID=`sudo docker ps -a|grep "${instanceName}" | awk '{print $1}'`
-    # if [ ! "`sudo docker ps -a|grep ${instanceName}`" == "" ]; then
+    containerID=`docker ps -a | grep "${instanceName}" | awk '{print $1}' `
     if [ "${containerID}" != "" ]; then
-         sudo docker rm -f ${containerID}
+        docker rm -f ${containerID}
     fi
 }
 
@@ -741,7 +736,8 @@ function detectMedia() {
                 MEDIA_OPTIONS=" --group-add audio --group-add video "
             fi
             # MEDIA_OPTIONS=" --group-add audio  --group-add video --device /dev/snd --device /dev/dri  "
-            MEDIA_OPTIONS="${MEDIA_OPTIONS} --device $device:$device"
+            #MEDIA_OPTIONS="${MEDIA_OPTIONS} --device $device:$device"
+            MEDIA_OPTIONS="${MEDIA_OPTIONS} --device $device"
         fi
     done
     echo "MEDIA_OPTIONS= ${MEDIA_OPTION}"
@@ -822,24 +818,19 @@ fi
 ## ----------------- main --------------------- ##
 ##################################################
 ##################################################
+set -x
+echo ">>> (final) ENV_VARS=${ENV_VARS}"
+echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+
+echo "args-amper:$@"
+echo "args-start:$*"
 
 case "${BUILD_TYPE}" in
     0)
         #### 0: (default) has neither X11 nor VNC/noVNC container build image type
         #### ---- for headless-based / GUI-less ---- ####
-        MORE_OPTIONS="${MORE_OPTIONS} ${HOSTS_OPTIONS} "
-        sudo docker run \
-            --name=${instanceName} \
-            --restart=${RESTART_OPTION} \
-            ${GPU_OPTION} \
-            ${REMOVE_OPTION} ${RUN_OPTION} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} \
-            ${privilegedString} \
-            ${USER_VARS} \
-            ${ENV_VARS} \
-            ${VOLUME_MAP} \
-            ${PORT_MAP} \
-            ${imageTag} \
-            "$@"
+	#bash -c "docker run --name=${instanceName}  --restart=${RESTART_OPTION}  ${REMOVE_OPTION} ${RUN_OPTION} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS}  ${privilegedString}  ${USER_VARS} $ENV_VARS ${VOLUME_MAP}  ${PORT_MAP}  ${imageTag} $* "
+        bash -c "docker run --name=${instanceName} --restart=${RESTART_OPTION} ${GPU_OPTION} ${REMOVE_OPTION} ${RUN_OPTION} ${HOSTS_OPTIONS} ${MISC_OPTIONS} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} ${privilegedString} ${USER_VARS} ${ENV_VARS} ${VOLUME_MAP} ${PORT_MAP} ${imageTag} $@ "
         ;;
     1)
         #### 1: X11/Desktip container build image type
@@ -850,13 +841,12 @@ case "${BUILD_TYPE}" in
         #X11_OPTION="-e DISPLAY=$DISPLAY -v /dev/shm:/dev/shm -v /tmp/.X11-unix:/tmp/.X11-unix -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket"
         X11_OPTION="-e DISPLAY=$DISPLAY -v /dev/shm:/dev/shm -v /tmp/.X11-unix:/tmp/.X11-unix"
         echo "X11_OPTION=${X11_OPTION}"
-        MORE_OPTIONS="${MORE_OPTIONS} ${HOSTS_OPTIONS} "
-        sudo docker run \
+        docker run \
             --name=${instanceName} \
             --restart=${RESTART_OPTION} \
             ${GPU_OPTION} \
             ${MEDIA_OPTIONS} \
-            ${REMOVE_OPTION} ${RUN_OPTION} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} \
+            ${REMOVE_OPTION} ${RUN_OPTION} ${HOSTS_OPTIONS} ${MISC_OPTIONS} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} \
             ${X11_OPTION} \
             ${privilegedString} \
             ${USER_VARS} \
@@ -864,7 +854,7 @@ case "${BUILD_TYPE}" in
             ${VOLUME_MAP} \
             ${PORT_MAP} \
             ${imageTag} \
-            "$@"
+            $@
         ;;
     2)
         #### 2: VNC/noVNC container build image type
@@ -876,11 +866,10 @@ case "${BUILD_TYPE}" in
             VNC_RESOLUTION=1920x1080
             ENV_VARS="${ENV_VARS} -e VNC_RESOLUTION=${VNC_RESOLUTION}" 
         fi
-        MORE_OPTIONS="${MORE_OPTIONS} ${HOSTS_OPTIONS} "
-        sudo docker run \
+        docker run \
             --name=${instanceName} \
             --restart=${RESTART_OPTION} \
-            ${REMOVE_OPTION} ${RUN_OPTION} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} \
+            ${REMOVE_OPTION} ${RUN_OPTION} ${HOSTS_OPTIONS} ${MISC_OPTIONS} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} \
             ${privilegedString} \
             ${USER_VARS} \
             ${ENV_VARS} \

@@ -12,6 +12,8 @@ function usage() {
         echo "-- Usage: $(basename $0) <New-Docker-Project-Directory> "
         echo "e.g."
         echo "    $(basename $0) ~/Docker-Projects/My-New-Docker"
+        echo "(Note) New Docker project name can only be ALL-lower-cased"
+        echo "       This is due to the constaints from Docker Engine!"
         exit 1
     fi
 }
@@ -25,12 +27,16 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 SRC_PROJ_DIR=$(dirname $DIR)
 
+DEST_DESIRED_DIR=${1:-$HOME/docker-generated}
+DEST_BASE_DIR=`echo "$(basename $DEST_DESIRED_DIR)" | tr '[:upper:]' '[:lower:]' `
+DEST_PROJ_DIR=$(dirname $DEST_DESIRED_DIR)/${DEST_BASE_DIR}
+if [ ! -s ${DEST_PROJ_DIR}]; then
+    mkdir -p ${DEST_PROJ_DIR}
+else
+    echo "... existing target/destination Project directory: ${DEST_PROJ_DIR}"
+fi
+
 echo "--- Auto convert the project name to 'Lower-cased' to due Docker Container naming convention enforce by Docker Engine"
-#DEST_PROJ_DIR=`echo "${1:-$HOME/docker-generated}" | tr '[:upper:]' '[:lower:]' `
-DEST_PROJ_DIR="${1:-$HOME/docker-generated}"
-DEST_ROOT_DIR=`realpath $(dirname $DEST_PROJ_DIR)`
-DEST_BASE_DIR=`echo $(basename $DEST_PROJ_DIR) | tr '[:upper:]' '[:lower:]' `
-DEST_PROJ_DIR=${DEST_ROOT_DIR}/${DEST_BASE_DIR}
 
 echo "--- Converted (all lower-cased) new Project Dir: ${DEST_PROJ_DIR}"
 echo
@@ -86,8 +92,22 @@ function cloneProject() {
     if [ ! -s ${DEST_PROJ_DIR}/docker-compose.yml.template ] || [ ! -s ${DEST_PROJ_DIR}/bin/auto-config-docker-compose.sh ]; then
         echo "*** ERROR ***: Missing ${DEST_PROJ_DIR}/docker-compose.yml.template or bin/auto-config-docker-compose.sh file! Abort!"; exit 1
     else
-        cd ${DEST_PROJ_DIR}; bin/auto-config-docker-compose.sh
+        #cd ${DEST_PROJ_DIR}; bin/auto-config-docker-compose.sh
+	cd ${DEST_PROJ_DIR}; bin/auto-config-all.sh
     fi
+
+    ## ----------------------------------------------------------
+    ## -- Overwrite Dockefile using Dockerfile.child.template: --
+    ## ----------------------------------------------------------
+    if [ -s ${DEST_PROJ_DIR}/Dockerfile.child.template ]; then
+        mv ${DEST_PROJ_DIR}/Dockerfile.child.template ${DEST_PROJ_DIR}/Dockerfile
+    else
+        echo -e "*** ERROR: Can't find template child Dockerfile: ${DEST_PROJ_DIR}/Dockerfile.child.template"
+    fi
+    ## ----------------------------------------------------------
+    ## -- Remove .git: --
+    ## ----------------------------------------------------------
+    rm -rf ${DEST_PROJ_DIR}/.git *BACKUP *SAVE *tmp
 }
 cloneProject
 
