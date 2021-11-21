@@ -1,5 +1,4 @@
-#ARG BASE=${BASE:-conda/miniconda3}
-ARG BASE=${BASE:-python:3.8}
+ARG BASE=${BASE:-python:3.9}
 FROM ${BASE}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
