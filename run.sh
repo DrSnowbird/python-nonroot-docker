@@ -25,12 +25,15 @@ fi
 ## ------------------------------------------------------------------------
 BUILD_TYPE=0
 
-###################################################
-#### ---- Parse Command Line Arguments:  ---- #####
-###################################################
+####################################################
+#### ---- NVIDIA GPU Check/Setup or not:  ---- #####
+####################################################
 IS_TO_RUN_CPU=0
 IS_TO_RUN_GPU=1
 
+###################################################
+#### ---- Parse Command Line Arguments:  ---- #####
+###################################################
 
 RESTART_OPTION_VALUES=" no on-failure unless-stopped always "
 RESTART_OPTION=${RESTART_OPTION:-no}
@@ -151,15 +154,16 @@ function check_NVIDIA() {
         fi
     fi
 }
-check_NVIDIA
-#### ---- NVIDIA Docker run recommendations: ----
-# NOTE: The SHMEM allocation limit is set to the default of 64MB.  This may be
-#   insufficient for PyTorch.  NVIDIA recommends the use of the following flags:
-#   docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 ...
-# -ipc=host --ulimit memlock=-1 --ulimit stack=67108864
-GPU_OPTION="${GPU_OPTION} --ulimit memlock=-1 --ulimit stack=67108864 "
-echo "GPU_OPTION= ${GPU_OPTION}"
-
+if [ ${IS_TO_RUN_GPU} -gt 0 ]; then
+    check_NVIDIA
+    #### ---- NVIDIA Docker run recommendations: ----
+    # NOTE: The SHMEM allocation limit is set to the default of 64MB.  This may be
+    #   insufficient for PyTorch.  NVIDIA recommends the use of the following flags:
+    #   docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 ...
+    # -ipc=host --ulimit memlock=-1 --ulimit stack=67108864
+    GPU_OPTION="${GPU_OPTION} --ulimit memlock=-1 --ulimit stack=67108864 "
+    echo "GPU_OPTION= ${GPU_OPTION}"
+fi
 echo "$@"
 
 ## ------------------------------------------------------------------------
@@ -521,8 +525,22 @@ function generateEnvVars2() {
     done
 }
 generateEnvVars2
-echo "ENV_VARS=$ENV_VARS"
-echo "ENV_APP_RUN_CMD=$ENV_APP_RUN_CMD"
+echo ">> ENV_VARS=$ENV_VARS"
+echo ">> ENV_APP_RUN_CMD=$ENV_APP_RUN_CMD"
+
+function generateEnvVars_v2() {
+    while read line; do
+        echo "Line=$line"
+        key=${line%=*}
+        value=${line#*=}
+        key=$(eval echo $value)
+        ENV_VARS="${ENV_VARS} -e ${line%=*}=$(eval echo $value)"
+    done < <(grep -E "^[[:blank:]]*$1.+[[:blank:]]*=[[:blank:]]*.+[[:blank:]]*" ${DOCKER_ENV_FILE} | grep -v "^#")
+    echo "ENV_VARS=$ENV_VARS"
+}
+#generateEnvVars_v2
+#echo ">> ENV_VARS=$ENV_VARS"
+
 
 function generateEnvVars() {
     if [ "${1}" != "" ]; then
@@ -603,8 +621,8 @@ function generateProxyEnv() {
     fi
     ENV_VARS="${ENV_VARS} ${PROXY_PARAM}"
 }
-#generateProxyEnv
-#echo "ENV_VARS=${ENV_VARS}"
+generateProxyEnv
+echo "ENV_VARS=${ENV_VARS}"
 
 ###################################################
 #### ---- Function: Generate privilege String  ----
@@ -821,6 +839,16 @@ fi
 echo ">>> (final) ENV_VARS=${ENV_VARS}"
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 set -x
+
+########################################
+#### ---- USER: Optional setup:---- ####
+########################################
+#USER_OPTIONS="--user $(id -u):$(id -g)"
+USER_ID=`cat ${DOCKER_ENV_FILE} | grep  "^USER_ID=" | cut -d'=' -f2 | sed 's/ *$//g'`
+GROUP_ID=`cat ${DOCKER_ENV_FILE} | grep  "^GROUP_ID=" | cut -d'=' -f2 | sed 's/ *$//g'`
+USER_OPTIONS="--user ${USER_ID:-1000}:${GROUP_ID:-1000}"
+MORE_OPTIONS="${MORE_OPTIONS} ${USER_OPTIONS}"
+
 echo "args-amper:$@"
 echo "args-start:$*"
 
@@ -840,20 +868,7 @@ case "${BUILD_TYPE}" in
         #X11_OPTION="-e DISPLAY=$DISPLAY -v /dev/shm:/dev/shm -v /tmp/.X11-unix:/tmp/.X11-unix -e DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket"
         X11_OPTION="-e DISPLAY=$DISPLAY -v /dev/shm:/dev/shm -v /tmp/.X11-unix:/tmp/.X11-unix"
         echo "X11_OPTION=${X11_OPTION}"
-        docker run \
-            --name=${instanceName} \
-            --restart=${RESTART_OPTION} \
-            ${GPU_OPTION} \
-            ${MEDIA_OPTIONS} \
-            ${REMOVE_OPTION} ${RUN_OPTION} ${HOSTS_OPTIONS} ${MISC_OPTIONS} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} \
-            ${X11_OPTION} \
-            ${privilegedString} \
-            ${USER_VARS} \
-            ${ENV_VARS} \
-            ${VOLUME_MAP} \
-            ${PORT_MAP} \
-            ${imageTag} \
-            $@
+        bash -c "docker run --name=${instanceName} --restart=${RESTART_OPTION} ${GPU_OPTION} ${MEDIA_OPTIONS} ${REMOVE_OPTION} ${RUN_OPTION} ${HOSTS_OPTIONS} ${MISC_OPTIONS} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} ${X11_OPTION} ${privilegedString} ${USER_VARS} ${ENV_VARS} ${VOLUME_MAP} ${PORT_MAP} ${imageTag} $@"
         ;;
     2)
         #### 2: VNC/noVNC container build image type
@@ -865,17 +880,7 @@ case "${BUILD_TYPE}" in
             VNC_RESOLUTION=1920x1080
             ENV_VARS="${ENV_VARS} -e VNC_RESOLUTION=${VNC_RESOLUTION}" 
         fi
-        docker run \
-            --name=${instanceName} \
-            --restart=${RESTART_OPTION} \
-            ${REMOVE_OPTION} ${RUN_OPTION} ${HOSTS_OPTIONS} ${MISC_OPTIONS} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} \
-            ${privilegedString} \
-            ${USER_VARS} \
-            ${ENV_VARS} \
-            ${VOLUME_MAP} \
-            ${PORT_MAP} \
-            ${imageTag} \
-            $@
+        bash -c "docker run --name=${instanceName} --restart=${RESTART_OPTION} ${REMOVE_OPTION} ${RUN_OPTION} ${HOSTS_OPTIONS} ${MISC_OPTIONS} ${MORE_OPTIONS} ${CERTIFICATE_OPTIONS} ${privilegedString} ${USER_VARS} ${ENV_VARS} ${VOLUME_MAP} ${PORT_MAP} ${imageTag} $@"
         ;;
 
 esac

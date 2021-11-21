@@ -64,6 +64,10 @@ services:
     # networks:
     #  - dev_network
 
+#volumes:
+#    {{CONTAINER_NAME}}_volume:
+#        external: false
+
 #networks:
 #  dev_network:
 #    external:

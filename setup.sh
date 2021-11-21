@@ -29,20 +29,33 @@ env
 
 # -- debug use only --
 verify=1
+DEBUG=0
 
-#### ---------------------------
-#### --- APP: LOCATION       ---
-#### ---------------------------
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+echo ">>> PWD=$PWD"
+echo ">>> APP_HOME=${APP_HOME}"
 
-if [[ "$DIR" =~ "/app" ]]; then
-    APP_HOME=${APP_HOME:-${DIR}}
-else
-     # - find possilbe app directory: 
-    APP_HOME=`realpath $(find ./ -name app)`
+#### ---------------------
+#### --- APP: LOCATION ---
+#### ---------------------
+if [ ! -s ${APP_HOME} ]; then
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+    if [[ "$DIR" =~ "/app$" ]]; then
+        APP_HOME=${DIR}
+    else
+        # - find possilbe app directory:
+        if [ -s ${HOME}/app ]; then
+            APP_HOME=${HOME}/app
+	else
+            APP_HOME=`realpath $(find ./ -name app)`
+	    if [ "$APP_HOME" != "" ] && [ -s $APP_HOME ]; then
+                echo ">>> Found APP_HOME=${APP_HOME}"
+	    else
+		echo "*** ERROR: Can't find APP_HOME: Abort!"
+		exit 999
+	    fi
+	fi
+    fi
 fi
-
-echo "PWD=$PWD"
 
 #### ---------------------------
 #### --- APP: DATA Directory ---
@@ -137,6 +150,7 @@ if [ "$PP_RUN_MAIN" != "" ]; then
         echo "    >>>> APP_RUN_MAIN_base=${APP_RUN_MAIN_base}"
     fi
 fi
+echo "(final)>>> APP_RUN_DIR=$APP_RUN_DIR"
 
 if [ "$APP_RUN_CMD" = "" ]; then
     # Need to check APP_RUN_MAIN defined or not

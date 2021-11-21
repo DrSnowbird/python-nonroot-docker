@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash -x
 
 #### ------------------------------------- ####
 #### ---- Docker:Generate:New Porject ---- ####
@@ -21,6 +21,7 @@ usage $*
 
 set -e
 
+
 ## ----------------------- ##
 ## -- Prepare variables -- ##
 ## ----------------------- ##
@@ -30,7 +31,8 @@ SRC_PROJ_DIR=$(dirname $DIR)
 DEST_DESIRED_DIR=${1:-$HOME/docker-generated}
 DEST_BASE_DIR=`echo "$(basename $DEST_DESIRED_DIR)" | tr '[:upper:]' '[:lower:]' `
 DEST_PROJ_DIR=$(dirname $DEST_DESIRED_DIR)/${DEST_BASE_DIR}
-if [ ! -s ${DEST_PROJ_DIR}]; then
+PARENT_CONTAINER=$(basename ${SRC_PROJ_DIR})
+if [ ! -s ${DEST_PROJ_DIR} ]; then
     mkdir -p ${DEST_PROJ_DIR}
 else
     echo "... existing target/destination Project directory: ${DEST_PROJ_DIR}"
@@ -50,8 +52,13 @@ read -t $wait_seconds -p "Hit ENTER (in $wait_seconds seconds) to continue or CT
 ## ----------------------- ##
 SED_MAC_FIX="''"
 CP_OPTION="--backup=numbered"
+## ------------------------------------------
+## -- To find the HOST IP for Docker       --
+## --  Container to pass into Container    --
+## -- This will handle both Unix and MacOS --
+## ------------------------------------------
 HOST_IP=127.0.0.1
-function macFixes() {
+function find_host_ip() {
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
         # ...
         HOST_IP=`ip route get 1|grep via | awk '{print $7}'`
@@ -64,22 +71,23 @@ function macFixes() {
         echo ${HOST_IP}
     fi
 }
-macFixes
+find_host_ip
 
 ## ----------------------- ##
 ## -- 1.) Clone Project -- ##
 ## ----------------------- ##
 function cloneProject() {
-    if [ ! -d $(dirname ${DEST_PROJ_DIR}) ]; then
-        mkdir -p $(dirname ${DEST_PROJ_DIR})
-    fi
-    cp -rf ${SRC_PROJ_DIR} ${DEST_PROJ_DIR}
-    if [ ! -d ${DEST_PROJ_DIR} ]; then
-        echo "*** ERROR ****: cloneProject(): FAIL: Abort!" ; exit 1
-    else
-        echo "--- CLONE Docker Project: cloneProject(): "
-        ls -al ${DEST_PROJ_DIR}
-    fi
+    #if [ ! -d $(dirname ${DEST_PROJ_DIR}) ]; then
+    #    mkdir -p $(dirname ${DEST_PROJ_DIR})
+    #fi
+    cp -R ${SRC_PROJ_DIR}/. ${DEST_PROJ_DIR}
+    #if [ ! -d ${DEST_PROJ_DIR} ]; then
+    #    echo "*** ERROR ****: cloneProject(): FAIL: Abort!" ; exit 1
+    #else
+    #    echo "--- CLONE Docker Project: cloneProject(): "
+    #    ls -al ${DEST_PROJ_DIR}
+    #fi
+    ls -al ${DEST_PROJ_DIR}
 
     # -- Generate .env --
     if [ ! -s ${DEST_PROJ_DIR}/.env.template ] || [ ! -s ${DEST_PROJ_DIR}/bin/auto-config-env.sh ]; then
@@ -101,6 +109,7 @@ function cloneProject() {
     ## ----------------------------------------------------------
     if [ -s ${DEST_PROJ_DIR}/Dockerfile.child.template ]; then
         mv ${DEST_PROJ_DIR}/Dockerfile.child.template ${DEST_PROJ_DIR}/Dockerfile
+        sed -i ${SED_MAC_FIX} "s#{{PARENT_CONTAINER}}#$PARENT_CONTAINER#g" ${DEST_PROJ_DIR}/Dockerfile
     else
         echo -e "*** ERROR: Can't find template child Dockerfile: ${DEST_PROJ_DIR}/Dockerfile.child.template"
     fi

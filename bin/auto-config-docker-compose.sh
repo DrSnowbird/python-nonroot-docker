@@ -8,6 +8,13 @@
 
 #set -e
 
+DEBUG=0
+function debug() {
+    if [ $DEBUG -gt 0 ]; then
+        echo $*
+    fi
+}
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 PROJ_DIR=$(dirname $DIR)
@@ -15,6 +22,7 @@ PROJ_DIR=$(dirname $DIR)
 cd ${PROJ_DIR}
 
 bin/auto-config-with-template.sh $@ docker-compose.yml.template
+
 
 ###################################################
 #### ---- Detect Docker Run Env files ----

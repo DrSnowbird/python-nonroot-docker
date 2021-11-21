@@ -1,5 +1,9 @@
 #!/bin/bash
 #
+###########################################################################
+#### ---- docker-entrypoint.sh: for application with ./app folder ---- ####
+###########################################################################
+
 # docker-entrypoint.sh
 #
 # The Dockerfile CMD, or any "docker run" command option, gets
@@ -31,7 +35,7 @@ if [ "${find_app_main}" != "" ]; then
        $@
     fi
 else
-    echo "--- APP_MAIN not in CMD ..."
+    echo "--- APP_MAIN not found in CMD (from Dockerfile or run) ..."
     $@
 fi
 
