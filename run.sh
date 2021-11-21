@@ -378,11 +378,11 @@ function cutomizedVolume() {
 
 function checkHostVolumePath() {
     _left=$1
-    mkdir -p ${_left}
-    sudo chown -R $USER:$USER ${_left}
-    if [ -s ${_left} ]; then 
-        ls -al ${_left}
-    else 
+    if [ ! -s ${_left} ]; then
+        mkdir -p ${_left}
+        sudo chown -R $USER:$USER ${_left}
+    fi
+    if [ ! -s ${_left} ]; then 
         echo "*** ERROR: ${_left}: Not existing!"
     fi
 }
@@ -402,7 +402,7 @@ function generateVolumeMapping() {
             if [ "`echo $vol|grep 'volume-'`" != "" ]; then
                 cutomizedVolume $vol
             else
-                echo "************* hasColon=$hasColon"
+                debug "************* hasColon=$hasColon"
                 left=`echo $vol|cut -d':' -f1`
                 right=`echo $vol|cut -d':' -f2`
                 leftHasDot=`echo $left|grep "^\./"`
@@ -411,11 +411,11 @@ function generateVolumeMapping() {
                     debug "******** A. Left HAS Dot pattern: leftHasDot=$leftHasDot"
                     if [[ ${right} == "/"* ]]; then
                         ## -- pattern like: "./data:/containerPath/data"
-                        echo "******* A-1 -- pattern like ./data:/data --"
+                        debug "******* A-1 -- pattern like ./data:/data --"
                         VOLUME_MAP="${VOLUME_MAP} -v `pwd`/${left#./}:${right}"
                     else
                         ## -- pattern like: "./data:data"
-                        echo "******* A-2 -- pattern like ./data:data --"
+                        debug "******* A-2 -- pattern like ./data:data --"
                         VOLUME_MAP="${VOLUME_MAP} -v `pwd`/${left#./}:${DOCKER_VOLUME_DIR}/${right}"
                     fi
                     checkHostVolumePath "`pwd`/${left}"
@@ -427,11 +427,11 @@ function generateVolumeMapping() {
                         debug "******* B-1 ## Has pattern like /data on the left "
                         if [[ ${right} == "/"* ]]; then
                             ## -- pattern like: "/data:/containerPath/data"
-                            echo "****** B-1-a pattern like /data:/containerPath/data --"
+                            debug "****** B-1-a pattern like /data:/containerPath/data --"
                             VOLUME_MAP="${VOLUME_MAP} -v ${left}:${right}"
                         else
                             ## -- pattern like: "/data:data"
-                            echo "----- B-1-b pattern like /data:data --"
+                            debug "----- B-1-b pattern like /data:data --"
                             VOLUME_MAP="${VOLUME_MAP} -v ${left}:${DOCKER_VOLUME_DIR}/${right}"
                         fi
                         checkHostVolumePath "${left}"
@@ -440,7 +440,7 @@ function generateVolumeMapping() {
                         rightHasAbsPath=`echo $right|grep "^/.*"`
                         debug ">>>>>>>>>>>>> rightHasAbsPath=$rightHasAbsPath"
                         if [[ ${right} == "/"* ]]; then
-                            echo "****** B-2-a pattern like: data:/containerPath/data"
+                            debug "****** B-2-a pattern like: data:/containerPath/data"
                             debug "-- pattern like ./data:/data --"
                             VOLUME_MAP="${VOLUME_MAP} -v ${LOCAL_VOLUME_DIR}/${left}:${right}"
                         else
@@ -818,10 +818,9 @@ fi
 ## ----------------- main --------------------- ##
 ##################################################
 ##################################################
-set -x
 echo ">>> (final) ENV_VARS=${ENV_VARS}"
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-
+set -x
 echo "args-amper:$@"
 echo "args-start:$*"
 

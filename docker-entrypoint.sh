@@ -31,7 +31,7 @@ if [ "${find_app_main}" != "" ]; then
        $@
     fi
 else
-    echo "--- APP_MAIN not found ..."
+    echo "--- APP_MAIN not in CMD ..."
     $@
 fi
 

@@ -35,6 +35,8 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 #####################################
 WORKDIR ${APP_HOME}
 USER ${USER}
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip --no-cache-dir install --ignore-installed -U -r requirements.txt
 
 ######################
 #### (Test only) #####
