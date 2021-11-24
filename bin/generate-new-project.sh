@@ -29,7 +29,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 SRC_PROJ_DIR=$(dirname $DIR)
 
 DEST_DESIRED_DIR=${1:-$HOME/docker-generated}
-DEST_BASE_DIR=`echo "$(basename $DEST_DESIRED_DIR)" | tr '[:upper:]' '[:lower:]' `
+DEST_DESIRED_DIR=$(realpath ${DEST_DESIRED_DIR})
+DEST_BASE_DIR=`echo "$(basename $DEST_DESIRED_DIR)"`
+CHILD_CONTAINER=`echo "$(basename ${DEST_BASE_DIR})" | tr '[:upper:]' '[:lower:]' `
 DEST_PROJ_DIR=$(dirname $DEST_DESIRED_DIR)/${DEST_BASE_DIR}
 PARENT_CONTAINER=$(basename ${SRC_PROJ_DIR})
 if [ ! -s ${DEST_PROJ_DIR} ]; then
@@ -80,7 +82,10 @@ function cloneProject() {
     #if [ ! -d $(dirname ${DEST_PROJ_DIR}) ]; then
     #    mkdir -p $(dirname ${DEST_PROJ_DIR})
     #fi
-    cp -R ${SRC_PROJ_DIR}/. ${DEST_PROJ_DIR}
+    cp -R ${SRC_PROJ_DIR}/* ${DEST_PROJ_DIR}/
+    cp ${SRC_PROJ_DIR}/.env ${DEST_PROJ_DIR}/
+    cp ${SRC_PROJ_DIR}/.env.template ${DEST_PROJ_DIR}/
+    
     #if [ ! -d ${DEST_PROJ_DIR} ]; then
     #    echo "*** ERROR ****: cloneProject(): FAIL: Abort!" ; exit 1
     #else
@@ -111,12 +116,13 @@ function cloneProject() {
         mv ${DEST_PROJ_DIR}/Dockerfile.child.template ${DEST_PROJ_DIR}/Dockerfile
         sed -i ${SED_MAC_FIX} "s#{{PARENT_CONTAINER}}#$PARENT_CONTAINER#g" ${DEST_PROJ_DIR}/Dockerfile
     else
-        echo -e "*** ERROR: Can't find template child Dockerfile: ${DEST_PROJ_DIR}/Dockerfile.child.template"
+        echo -e "--- INFO: Can't find template child Dockerfile: ${DEST_PROJ_DIR}/Dockerfile.child.template!"
+        echo -e "--- INFO: Instead, use the parent Dockerfile as source."
     fi
     ## ----------------------------------------------------------
     ## -- Remove .git: --
     ## ----------------------------------------------------------
-    rm -rf ${DEST_PROJ_DIR}/.git *BACKUP *SAVE *tmp
+    rm -rf ${DEST_PROJ_DIR}/.git *BACKUP *SAVE *tmp .env*BACKUP
 }
 cloneProject
 
