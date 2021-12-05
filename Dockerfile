@@ -99,11 +99,13 @@ RUN mkdir ${HOME}/bin
 #COPY --chown=${USER} ./bin/pre-load-virtualenv.sh ${HOME}/bin/
 #RUN ${HOME}/bin/pre-load-virtualenv.sh myvenv
 
-################################ 
-#### ---- Entrypoint setup ----#
-################################
-#### --- Copy Entrypoint script in the container ---- ####
-COPY --chown=$USER ./docker-entrypoint.sh /
+#########################################
+##### ---- Docker Entrypoint : ---- #####
+#########################################
+COPY --chown=${USER}:${USER} docker-entrypoint.sh /
+COPY --chown=${USER}:${USER} scripts /scripts
+COPY --chown=${USER}:${USER} certificates /certificates
+RUN /scripts/setup_system_certificates.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 ############################### 

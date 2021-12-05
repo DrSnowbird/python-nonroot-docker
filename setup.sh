@@ -1,12 +1,23 @@
 #!/bin/bash
 
-#### ---------------------------------
-#### --- PROGRAM_TYPE: py, java, js -- 
-#### ---------------------------------
+####################################################################
+#### ---- setup.sh: for application                        ---- ####
+####################################################################
+
+set -e
+env
+
+#### ---------------------------------------------
+#### --- APP: Type: python, java, nodejs, etc. --- 
+#### ---------------------------------------------
 #### MANDATORY: ONLY choose one here
 PROGRAM_TYPE="py"
 #PROGRAM_TYPE="java"
 #PROGRAM_TYPE="js"
+
+# -- debug use only --
+verify=1
+DEBUG=0
 
 # -------------------------------
 # ----------- Usage -------------
@@ -15,22 +26,6 @@ PROGRAM_TYPE="py"
 # Run the Application:
 #   ./setup.sh
 # -------------------------------
-set -e
-env
-
-#### ---------------------------------
-#### --- Process command arguments ---
-#### ---------------------------------
-#program_name=$(basename $0)
-#function usage() {
-#    echo -e "Usage: $program_name <APP_RUN_DIR> <APP_RUN_CMD>"
-#}
-#usage
-
-# -- debug use only --
-verify=1
-DEBUG=0
-
 echo ">>> PWD=$PWD"
 echo ">>> APP_HOME=${APP_HOME}"
 
@@ -51,16 +46,11 @@ if [ ! -s ${APP_HOME} ]; then
                 echo ">>> Found APP_HOME=${APP_HOME}"
 	    else
 		echo "*** ERROR: Can't find APP_HOME: Abort!"
-		exit 999
+		exit 9
 	    fi
 	fi
     fi
 fi
-
-#### ---------------------------
-#### --- APP: DATA Directory ---
-#### ---------------------------
-APP_DATA_DIR=${APP_DATA_DIR:-$HOME/data}
 
 #### ---------------------------
 #### --- APP: UTILITY        --- 

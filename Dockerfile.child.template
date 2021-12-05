@@ -3,6 +3,9 @@ FROM ${BASE}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
 
+#########################
+#### ---- App:  ---- ####
+#########################
 USER ${USER:-developer}
 WORKDIR ${HOME:-/home/developer}
 
@@ -17,12 +20,8 @@ COPY --chown=$USER:$USER ./app $HOME/app
 #########################################
 ##### ---- Setup: Entry Files  ---- #####
 #########################################
-ENV APP_HOME=${APP_HOME:-$HOME/app}
-ENV APP_MAIN=${APP_MAIN:-setup.sh}
-
 COPY --chown=${USER}:${USER} docker-entrypoint.sh /
 COPY --chown=${USER}:${USER} ${APP_MAIN} ${APP_HOME}/setup.sh
-
 RUN sudo chmod +x /docker-entrypoint.sh ${APP_HOME}/setup.sh 
 
 #########################################

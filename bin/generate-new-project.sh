@@ -19,26 +19,35 @@ function usage() {
 }
 usage $*
 
-set -e
-
+env
+whoami
+pwd
 
 ## ----------------------- ##
 ## -- Prepare variables -- ##
 ## ----------------------- ##
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-SRC_PROJ_DIR=$(dirname $DIR)
+DEST_PROJ_DIR=${1:-$HOME/docker-generated/$(date +%F)}
+function setupDestDir() {
+    DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+    SRC_PROJ_DIR=$(dirname $DIR)
+    DEST_PROJ_DIR=${1:-$HOME/docker-generated}
+    if [ "$(dirname ${DEST_PROJ_DIR})" == "" ]; then
+        DEST_PROJ_DIR=`pwd`/${DEST_PROJ_DIR}
+    else
+        DEST_PROJ_DIR=$(realpath ${DEST_PROJ_DIR})
+    fi
+    echo "... DEST_PROJ_DIR=${DEST_PROJ_DIR}"
+    if [ ! -d ${DEST_PROJ_DIR} ]; then
+        echo -e "... NEW: destination Project directory: ${DEST_PROJ_DIR}"
+        mkdir -p ${DEST_PROJ_DIR}
+    else
+        echo "... EXISTING: destination Project directory: ${DEST_PROJ_DIR}"
+    fi
+}
+setupDestDir ${DEST_PROJ_DIR}
 
-DEST_DESIRED_DIR=${1:-$HOME/docker-generated}
-DEST_DESIRED_DIR=$(realpath ${DEST_DESIRED_DIR})
-DEST_BASE_DIR=`echo "$(basename $DEST_DESIRED_DIR)"`
-CHILD_CONTAINER=`echo "$(basename ${DEST_BASE_DIR})" | tr '[:upper:]' '[:lower:]' `
-DEST_PROJ_DIR=$(dirname $DEST_DESIRED_DIR)/${DEST_BASE_DIR}
+CHILD_CONTAINER=`echo "$(basename ${DEST_PROJ_DIR})" | tr '[:upper:]' '[:lower:]' `
 PARENT_CONTAINER=$(basename ${SRC_PROJ_DIR})
-if [ ! -s ${DEST_PROJ_DIR} ]; then
-    mkdir -p ${DEST_PROJ_DIR}
-else
-    echo "... existing target/destination Project directory: ${DEST_PROJ_DIR}"
-fi
 
 echo "--- Auto convert the project name to 'Lower-cased' to due Docker Container naming convention enforce by Docker Engine"
 
@@ -82,9 +91,10 @@ function cloneProject() {
     #if [ ! -d $(dirname ${DEST_PROJ_DIR}) ]; then
     #    mkdir -p $(dirname ${DEST_PROJ_DIR})
     #fi
-    cp -R ${SRC_PROJ_DIR}/* ${DEST_PROJ_DIR}/
+    cp -r ${SRC_PROJ_DIR}/* ${DEST_PROJ_DIR}/
     cp ${SRC_PROJ_DIR}/.env ${DEST_PROJ_DIR}/
     cp ${SRC_PROJ_DIR}/.env.template ${DEST_PROJ_DIR}/
+    cp ${SRC_PROJ_DIR}/.gitignore ${DEST_PROJ_DIR}/
     
     #if [ ! -d ${DEST_PROJ_DIR} ]; then
     #    echo "*** ERROR ****: cloneProject(): FAIL: Abort!" ; exit 1
