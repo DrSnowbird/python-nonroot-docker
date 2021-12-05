@@ -27,7 +27,8 @@ ENV GROUP_ID=${GROUP_ID:-1000}
 ENV USER=${USER:-developer}
 ENV HOME=/home/${USER}
 
-RUN apt-get update && apt-get install -y --no-install-recommends sudo apt-utils && \
+ENV LANG C.UTF-8
+RUN apt-get update && apt-get install -y --no-install-recommends sudo curl wget unzip ca-certificates && \
     useradd -ms /bin/bash ${USER} && \
     export uid=${USER_ID} gid=${GROUP_ID} && \
     mkdir -p /home/${USER} && \
@@ -37,7 +38,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends sudo apt-utils 
     echo "${USER}:x:${USER_ID}:" >> /etc/group && \
     echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER} && \
     chmod 0440 /etc/sudoers.d/${USER} && \
-    chown -R ${USER}:${USER} /home/${USER}
+    chown -R ${USER}:${USER} /home/${USER} && \
+    apt-get autoremove; \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "vm.max_map_count=262144" | tee -a /etc/sysctl.conf
 
 ################################################### 
 #### ---- python3: pyenv                    ----  #
@@ -94,10 +98,17 @@ RUN echo "alias venv='pyenv virtualenv'" >> $HOME/.bashrc && \
     
 ENV PYENV_ROOT=${HOME}/.pyenv
 
-RUN mkdir ${HOME}/bin 
-#COPY --chown=${USER} ./bin ${HOME}/bin
-#COPY --chown=${USER} ./bin/pre-load-virtualenv.sh ${HOME}/bin/
-#RUN ${HOME}/bin/pre-load-virtualenv.sh myvenv
+RUN mkdir ${HOME}/bin
+RUN apt-get clean -y && apt-get autoremove && \
+    rm -rf /var/lib/apt/lists/*
+
+########################################
+#### ---- Set up NVIDIA-Docker ---- ####
+########################################
+## ref: https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(Native-GPU-Support)#usage
+ENV TOKENIZERS_PARALLELISM=false
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
 
 #########################################
 ##### ---- Docker Entrypoint : ---- #####
@@ -108,15 +119,12 @@ COPY --chown=${USER}:${USER} certificates /certificates
 RUN /scripts/setup_system_certificates.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-############################### 
-#### ---- Workspace setup ----#
-###############################
-VOLUME "${HOME}/data"
-VOLUME "${HOME}/workspace"
+##################################
+#### ---- start user env ---- ####
+##################################
+USER ${USER}
+WORKDIR "$HOME"
 
-#### ------------------------------------------------------------------------
-#### ---- Change to user mode ----
-#### ------------------------------------------------------------------------
 #CMD ["/bin/bash"]
 CMD ["python", "-V"]
 

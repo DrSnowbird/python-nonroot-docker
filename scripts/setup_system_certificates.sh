@@ -2,6 +2,10 @@
 
 echo "####################### Components: $(basename $0) ###########################"
 
+cat /etc/*rel*
+
+find . -name "ca-certificates"
+
 if [ "$1" != "" ]; then
     SOURCE_CERTIFICATES_DIR=${SOURCE_CERTIFICATES_DIR:-$1}
 else
@@ -151,7 +155,10 @@ if [ $OS_TYPE -eq 1 ]; then
     # Ubuntu
     CERT_COMMAND=`which update-ca-certificates`
     CMD_OPT=
-    TARGET_CERTIFICATES_DIR=/usr/local/share/ca-certificates
+    TARGET_CERTIFICATES_DIR=/usr/local/ca-certificates
+    if [ -s /usr/local/share/ca-certificates ]; then
+        TARGET_CERTIFICATES_DIR=/usr/local/share/ca-certificates
+    fi
 else
     if [ $OS_TYPE -eq 2 ]; then
         # CentOS

@@ -1,9 +1,9 @@
 version: '3.1' 
 
 services:
-  python-non-root:
-    container_name: python-non-root
-    image: openkbs/python-non-root
+  python-nonroot-docker:
+    container_name: python-nonroot-docker
+    image: openkbs/python-nonroot-docker
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,12 +12,12 @@ services:
     env_file:
       - ./.env
     environment:
-      - CONTAINER_NAME=python-non-root
+      - CONTAINER_NAME=python-nonroot-docker
       - USER_ID=${USER_ID:-1000}
       - GROUP_ID=${GROUP_ID:-1000}
       # - APP_HOME=${APP_HOME:-/home/developer/app}
       # - APP_MAIN=${APP_MAIN:-setup.sh}
-      - DOCKER_HOST_IP=${DOCKER_HOST_IP:-192.168.0.121}
+      - DOCKER_HOST_IP=${DOCKER_HOST_IP:-127.0.1.1}
       - DOCKER_HOST_NAME=${DOCKER_HOST_NAME:-aurora}
     ## -------------------------------------------
     ## -- Change to your specific Volumes Mapping:
@@ -42,8 +42,6 @@ services:
     ## -------------------------------
     # ports:
     #   - "12345:12345"
-    ports:
-      - "3000:3000"
 
     ## -----------------------------
     ## -- Network setup if needed --
