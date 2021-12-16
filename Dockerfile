@@ -28,7 +28,7 @@ ENV USER=${USER:-developer}
 ENV HOME=/home/${USER}
 
 ENV LANG C.UTF-8
-RUN apt-get update && apt-get install -y --no-install-recommends sudo curl wget unzip ca-certificates && \
+RUN apt-get update && apt-get install -y --no-install-recommends sudo curl vim git ack wget unzip ca-certificates && \
     useradd -ms /bin/bash ${USER} && \
     export uid=${USER_ID} gid=${GROUP_ID} && \
     mkdir -p /home/${USER} && \
@@ -81,8 +81,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends sudo curl wget 
 USER ${USER}
 WORKDIR ${HOME}
 
-RUN sudo apt-get install -y curl vim git ack && \
-    curl https://pyenv.run | bash && \
+RUN curl -k https://pyenv.run | bash && \
     echo "export PYENV_ROOT=\$HOME/.pyenv" >> ~/.bashrc && \
     echo "export PATH=\$PYENV_ROOT/bin:\$HOME/.local/bin:\$PATH" >> $HOME/.bashrc && \
     echo "eval \"\$(pyenv init --path)\" " >> $HOME/.bashrc && \
@@ -99,8 +98,6 @@ RUN echo "alias venv='pyenv virtualenv'" >> $HOME/.bashrc && \
 ENV PYENV_ROOT=${HOME}/.pyenv
 
 RUN mkdir ${HOME}/bin
-RUN apt-get clean -y && apt-get autoremove && \
-    rm -rf /var/lib/apt/lists/*
 
 ########################################
 #### ---- Set up NVIDIA-Docker ---- ####
