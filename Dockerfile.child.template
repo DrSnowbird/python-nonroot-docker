@@ -3,20 +3,31 @@ FROM ${BASE}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
 
-#########################
-#### ---- App:  ---- ####
-#########################
+###############################
+#### ---- App: (ENV)  ---- ####
+###############################
 USER ${USER:-developer}
 WORKDIR ${HOME:-/home/developer}
 
 ENV APP_HOME=${APP_HOME:-$HOME/app}
 ENV APP_MAIN=${APP_MAIN:-setup.sh}
 
-#########################
-#### ---- App:  ---- ####
-#########################
-COPY --chown=$USER:$USER ./app $HOME/app
+#################################
+#### ---- App: (common) ---- ####
+################################
+WORKDIR ${APP_HOME}
+RUN python -u -m pip install --upgrade pip
 
+###############################
+#### ---- App Setup:  ---- ####
+###############################
+COPY --chown=$USER:$USER ./app $HOME/app
+COPY --chown=$USER:$USER ./bin $HOME/bin
+RUN $HOME/bin/pre-load-virtualenv.sh && \
+    if [ -s $HOME/app/requirements.txt ]; then \
+        pip install --no-cache-dir --user -r requirements.txt ; \
+    fi; 
+    
 #########################################
 ##### ---- Setup: Entry Files  ---- #####
 #########################################
@@ -34,6 +45,13 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 #####################################
 WORKDIR ${APP_HOME}
 USER ${USER}
+
+#############################################
+#############################################
+#### ---- App: (Customization here) ---- ####
+#############################################
+#############################################
+#### (you customization code here!) #########
 
 ######################
 #### (Test only) #####

@@ -3,7 +3,6 @@
 echo "------ environment vars ------"
 env | grep -i virtual
 env | grep -i venv
-#env | grep -i pyenv
 
 PYTHON_MAIN=${PYTHON_MAIN:-~/app}
 echo "PYTHON_MAIN=${PYTHON_MAIN}"
@@ -37,16 +36,17 @@ source ${VIRTUALENVWRAPPER_SHELL}
 #### ---- Pre-load PIP modules for multiple virtual python environment ---- ####
 ################################################################################
 #### ---- virtualenv setup ---- ####
-for algorithm in `ls ${PYTHON_MAIN}`; do
-    echo "============ Algorithm: ${algorithm} =============="
-    ## ----------------------- ##
-    ## -- virtualenvwrapper -- ##
-    ## ----------------------- ##
-    VENV_DIR=$(basename ${algorithm})
-    mkvirtualenv -p ${PYTHON_EXE} ${VENV_DIR}
-    workon ${VENV_DIR}
-    ## PIP install requiremented packages
-    if  [ -f ${PYTHON_MAIN}/${algorithm}/requirements.txt ]; then
-        pip3 install -r ${PYTHON_MAIN}/${algorithm}/requirements.txt
-    fi
-done
+
+## ----------------------- ##
+## -- virtualenvwrapper -- ##
+## ----------------------- ##
+PYENV_VIRTUAL_ENV=${PYENV_VIRTUAL_ENV:-/home/developer/.pyenv/versions/myvenv}
+
+VENV_DIR=$(basename ${PYENV_VIRTUAL_ENV})
+mkvirtualenv -p ${PYTHON_EXE} ${VENV_DIR}
+workon ${VENV_DIR}
+## PIP install requiremented packages
+if  [ -s ${PYTHON_MAIN}/requirements.txt ]; then
+    pip3 install -r ${PYTHON_MAIN}/requirements.txt
+fi
+
