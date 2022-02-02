@@ -55,7 +55,7 @@ RESTART_OPTION := always
 
 SHA := $(shell git describe --match=NeVeRmAtCh --always --abbrev=40 --dirty=*)
 
-reTIME_START := $(shell date +%s)
+TIME_START := $(shell date +%s)
 
 .PHONY: clean rmi build push pull up down run stop exec
 
