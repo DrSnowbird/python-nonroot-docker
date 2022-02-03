@@ -97,7 +97,8 @@ RUN echo "alias venv='pyenv virtualenv'" >> $HOME/.bashrc && \
     
 ENV PYENV_ROOT=${HOME}/.pyenv
 
-RUN mkdir ${HOME}/bin
+RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
+    mkdir ${HOME}/bin
 
 ########################################
 #### ---- Set up NVIDIA-Docker ---- ####
@@ -120,7 +121,7 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 #### ---- start user env ---- ####
 ##################################
 USER ${USER}
-WORKDIR "$HOME"
+WORKDIR ${HOME}
 
 #CMD ["/bin/bash"]
 CMD ["python", "-V"]

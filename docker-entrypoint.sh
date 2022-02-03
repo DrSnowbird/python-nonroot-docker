@@ -14,6 +14,8 @@ set -e
 
 env
 
+echo ">>> inputs: $@"
+
 APP_MAIN=${APP_MAIN:-setup.sh}
 
 base_app=$(basename $APP_MAIN)
