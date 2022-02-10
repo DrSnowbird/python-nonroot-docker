@@ -8,24 +8,18 @@ ENV DEBIAN_FRONTEND noninteractive
 #### ------------------------------------------------------------------------
 #### ---- User setup so we don't use root as user ----
 #### ------------------------------------------------------------------------
-ARG USER_ID=${USER_ID:-1000}
-ENV USER_ID=${USER_ID}
-
-ARG GROUP_ID=${GROUP_ID:-1000}
-ENV GROUP_ID=${GROUP_ID}
-    
-ARG USER=${USER:-developer}
-ENV USER=${USER}
-
-ENV WORKSPACE=${HOME}/workspace
 
 ###################################
 #### ---- user: developer ---- ####
 ###################################
 ENV USER_ID=${USER_ID:-1000}
 ENV GROUP_ID=${GROUP_ID:-1000}
+
 ENV USER=${USER:-developer}
+
 ENV HOME=/home/${USER}
+
+ENV WORKSPACE=${HOME}/workspace
 
 ENV LANG C.UTF-8
 RUN apt-get update && apt-get install -y --no-install-recommends sudo curl vim git ack wget unzip ca-certificates && \
