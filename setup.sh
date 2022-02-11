@@ -17,7 +17,6 @@ PROGRAM_TYPE="py"
 
 # -- debug use only --
 verify=1
-DEBUG=0
 
 # -------------------------------
 # ----------- Usage -------------

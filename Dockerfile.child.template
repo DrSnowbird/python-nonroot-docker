@@ -14,7 +14,7 @@ ENV APP_MAIN=${APP_MAIN:-setup.sh}
 
 #################################
 #### ---- App: (common) ---- ####
-################################
+#################################
 WORKDIR ${APP_HOME}
 RUN python -u -m pip install --upgrade pip
 
@@ -33,6 +33,7 @@ RUN $HOME/bin/pre-load-virtualenv.sh && \
 #########################################
 COPY --chown=${USER}:${USER} docker-entrypoint.sh /
 COPY --chown=${USER}:${USER} ${APP_MAIN} ${APP_HOME}/setup.sh
+
 RUN sudo chmod +x /docker-entrypoint.sh ${APP_HOME}/setup.sh 
 
 #########################################

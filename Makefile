@@ -75,7 +75,7 @@ build-time:
 
 build-rm:
 	docker build --force-rm --no-cache \
-	-t $(DOCKER_IMAGE):$(VERSION) .
+		-t $(DOCKER_IMAGE):$(VERSION) .
 
 build:
 	docker build \
