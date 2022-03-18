@@ -29,7 +29,6 @@ git status
 GIT_URLS=$@
 for git_url in $GIT_URLS; do
     echo -e ">> git_url: ${git_url}"
-    echo -e ">> git_url: ${git_url}"
     git_dir=${git_url##*/}
     git_dir=${git_dir%%.*}
     [ ! -s ${git_dir} ] || git submodule add ${git_url}

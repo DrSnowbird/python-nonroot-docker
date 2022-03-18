@@ -5,9 +5,36 @@ MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-#### ------------------------------------------------------------------------
-#### ---- User setup so we don't use root as user ----
-#### ------------------------------------------------------------------------
+##################################
+#### ---- Tools: setup   ---- ####
+##################################
+ENV LANG C.UTF-8
+ARG LIB_DEV_LIST="apt-utils"
+ARG LIB_BASIC_LIST="curl wget unzip ca-certificates"
+ARG LIB_COMMON_LIST="sudo bzip2 git xz-utils unzip vim net-tools" # coreutils gettext pwgen tini;
+ARG LIB_TOOL_LIST="graphviz"
+
+RUN set -eux; \
+    apt-get update -y && \
+    apt-get install -y --no-install-recommends ${LIB_DEV_LIST}  ${LIB_BASIC_LIST}  ${LIB_COMMON_LIST} ${LIB_TOOL_LIST} && \
+    apt-get clean -y && apt-get autoremove && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "vm.max_map_count=262144" | tee -a /etc/sysctl.conf
+    
+##############################################
+#### ---- Installation Directories   ---- ####
+##############################################
+ENV INSTALL_DIR=${INSTALL_DIR:-/usr}
+ENV SCRIPT_DIR=${SCRIPT_DIR:-$INSTALL_DIR/scripts}
+
+############################################
+##### ---- System: certificates : ---- #####
+##### ---- Corporate Proxy      : ---- #####
+############################################
+COPY ./scripts ${SCRIPT_DIR}
+COPY certificates /certificates
+RUN ${SCRIPT_DIR}/setup_system_certificates.sh
+RUN ${SCRIPT_DIR}/setup_system_proxy.sh
 
 ###################################
 #### ---- user: developer ---- ####

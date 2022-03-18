@@ -18,6 +18,8 @@ else
     SOURCE_CERTIFICATES_DIR=${SOURCE_CERTIFICATES_DIR:-/certificates}
 fi
 
+CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/etc/pki/ca-trust/source/anchors/}
+
 #### ---------------------------------------------------------------------------------------------------------------------------------- ####
 #### ---- (ref: https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself)
 #### ---------------------------------------------------------------------------------------------------------------------------------- ####
@@ -85,33 +87,43 @@ echo "${ORIG_ARGS}"
 echo "-------------"
 
 #### -------------------------------------------------
-#### OS_TYPE=1:Ubuntu, 2:Centos,, 0: OS_TYPE_NOT_FOUND
+#### OS_TYPE=
+#### >>>
+#### 0: OS_TYPE_NOT_FOUND
+#### 1: ubuntu/debian
+#### 2: centos/redhat/fedora
+#### 3: alpine
+#### 4: others
 #### -------------------------------------------------
 OS_TYPE=0
 
 REPO_CONF=/etc/apt/apt.conf
 ETC_ENV=/etc/environment
+APT_PATH=/usr/bin/apt
+YUM_PATH=/usr/bin/yum
 
+OS_NAME=
 function detectOS_alt() {
-    os_name="`which yum`"
-    if [ "$os_name" = "" ]; then
-        os_name="`which apt`"
-        if [ "$os_name" = "" ]; then
-            OS_TYPE=0
-        else
-            OS_TYPE=1
-        fi
-    else
+    OS_NAME="`which yum`"
+    if [ -s ${APT_PATH} ]; then
+        OS_NAME="ubuntu"
+        OS_TYPE=1
+    elif [ -s ${YUM_PATH} ]; then
+        OS_NAME="centos"
         OS_TYPE=2
     fi
  
 }
-detectOS_alt
+
 
 function detectOS() {
-    os_name="`cat /etc/os-release | grep -i '^NAME=\"Ubuntu\"' | awk -F= '{print $2}' | tr '[:upper:]' '[:lower:]' |sed 's/"//g' `"
-    case ${os_name} in
-        ubuntu*)
+    OS_NAME="`cat /etc/os-release |grep -i '^id='|cut -d'=' -f2|cut -d'"' -f2 | tr '[:upper:]' '[:lower:]'`"
+    #OS_NAME="`cat /etc/os-release | grep -i '^NAME=\"Ubuntu\"' | awk -F= '{print $2}' | tr '[:upper:]' '[:lower:]' |sed 's/"//g' `"
+    if [ "${OS_NAME}" == "" ]; then
+        detectOS_alt
+    fi
+    case ${OS_NAME} in
+        ubuntu*|debian*)
             OS_TYPE=1
             REPO_CONF=/etc/apt/apt.conf
             ETC_ENV=/etc/environment
@@ -119,6 +131,11 @@ function detectOS() {
         centos*)
             OS_TYPE=2
             REPO_CONF=/etc/yum.conf
+            ETC_ENV=/etc/environment
+            ;;
+        alpine*)
+            OS_TYPE=3
+            REPO_CONF=/etc/conf.d
             ETC_ENV=/etc/environment
             ;;
         *)
@@ -131,6 +148,7 @@ function detectOS() {
             ;;
     esac
 }
+detectOS
 
 #### --------------------------------------------------------------------------------------------
 #### After these steps the new CA is known by system utilities like curl and get. 
@@ -156,55 +174,83 @@ function detectOS() {
 #    update-ca-certificates # (for Ubuntu OS)
 #    # update-ca-trust extract # (for CentOS OS)
 #### (Unbunt version)
-#TARGET_CERTIFICATES_DIR=/usr/local/share/ca-certificates/extra
+#CERTITICATES_INSTALL_DIR=/usr/local/share/ca-certificates/extra
 if [ $OS_TYPE -eq 1 ]; then
-    # Ubuntu
-    CERT_COMMAND=`which update-ca-certificates`
+    # -- Ubuntu --
+    #CERT_COMMAND=`which update-ca-certificates`
+    CERT_COMMAND=/usr/sbin/update-ca-certificates
     CMD_OPT=
-    TARGET_CERTIFICATES_DIR=/usr/local/ca-certificates
+    CERTITICATES_INSTALL_DIR=/usr/local/ca-certificates
     if [ -s /usr/local/share/ca-certificates ]; then
-        TARGET_CERTIFICATES_DIR=/usr/local/share/ca-certificates
+        CERTITICATES_INSTALL_DIR=/usr/local/share/ca-certificates
     fi
+elif [ $OS_TYPE -eq 2 ]; then
+    # -- CentOS --
+    #CERT_COMMAND=`which update-ca-trust`
+    CERT_COMMAND=/usr/bin/update-ca-trust
+    #CMD_OPT=extract
+    #CMD_OPT="force-enable"
+    CMD_OPT=
+    CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/etc/pki/ca-trust/source/anchors/}
+elif [ $OS_TYPE -eq 3 ]; then
+    # -- Alpine --
+    # https://hackernoon.com/alpine-docker-image-with-secured-communication-ssl-tls-go-restful-api-128eb6b54f1f
+    CERT_COMMAND=`which update-ca-certificates`
+    #CERT_COMMAND=/usr/sbin/update-ca-certificates
+    CMD_OPT=
+    CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/usr/local/share/ca-certificates/}
+    if [ -s /usr/local/share/ca-certificates ]; then
+        CERTITICATES_INSTALL_DIR=/usr/local/share/ca-certificates
+    fi
+    #CERTIFICATES_FILE=${CERTIFICATES_FILE:-mitre-chain.txt}
+    # wget -O mitre-chain.crt --no-check-certificate https://gitlab.mitre.org/mitre-scripts/mitre-pki/raw/master/normalized/mitre-chain.txt
+    #wget -O ${CERTIFICATES_FILE} --no-check-certificate https://gitlab.mitre.org/mitre-scripts/mitre-pki/raw/master/normalized/${CERTIFICATES_FILE}
+    apk update && apk add ca-certificates && rm -rf /var/cache/apk/* 
+    #cp ${CERTIFICATES_FILE} /usr/local/share/ca-certificates/
+    #update-ca-certificates
 else
-    if [ $OS_TYPE -eq 2 ]; then
-        # CentOS
-        CERT_COMMAND=`which update-ca-trust`
-        TARGET_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors
-        CMD_OPT=extract
-    else
-        echo "OS_TYPE Unknown! Can't do! Abort!"
-        exit 1
-    fi
+    echo "OS_TYPE Unknown! Can't do! Abort!"
+    exit 1
 fi
 
 function setupSystemCertificates() {
     echo "================= Setup System Certificates ===================="
-    if [ ! -s ${TARGET_CERTIFICATES_DIR} ]; then
-        echo -e "*** TARGET_CERTIFICATES_DIR: ${TARGET_CERTIFICATES_DIR}: Not Found!"
-        $sudo mkdir -p ${TARGET_CERTIFICATES_DIR}
+    if [ ! -s ${CERTITICATES_INSTALL_DIR} ]; then
+        echo -e "*** CERTITICATES_INSTALL_DIR: ${CERTITICATES_INSTALL_DIR}: Not Found!"
+        $sudo mkdir -p ${CERTITICATES_INSTALL_DIR}
     fi
     if [ -s /etc/ca-certificates/update.d/docker-openjdk ]; then
-        cat /etc/ca-certificates/update.d/docker-openjdk
+        sudo cat /etc/ca-certificates/update.d/docker-openjdk
         echo ">> JAVA PATH=`which java`"
         $sudo sed -i "s#\$JAVA_HOME#$JAVA_HOME#g" /etc/ca-certificates/update.d/docker-openjdk
         env | grep -i java
-        $sudo cat /etc/ca-certificates/update.d/docker-openjdk
+        sudo cat /etc/ca-certificates/update.d/docker-openjdk
     fi
-    for cert in `cd ${SOURCE_CERTIFICATES_DIR} && ls * | grep -v dummy`; do
+    ls -al  ${SOURCE_CERTIFICATES_DIR}/*
+    echo -e ">>> ------------------------------"
+    CERT_FILES=`ls ${SOURCE_CERTIFICATES_DIR}/* | grep 'pem\|crt' | grep -v dummy`
+    echo -e ">>> ------------------------------"
+    echo -e ">>> /certificates: ${CERT_FILES}"
+    echo -e ">>> ------------------------------"
+    #for certificate in `$sudo ls ${SOURCE_CERTIFICATES_DIR}/* | grep '*.pem\|*.crt' | grep -v dummy`; do
+    for cert_file in ${CERT_FILES}; do
+        filename=$(basename -- "$certificate")
+        extension="${filename##*.}"
         ## -- Converting from PEM to CRT: -- ##
         ## openssl x509 -ouform der -in Some-Certificate.pem -out Some-Certificate.crt
-        if [[ "${cert}" == *"pem" ]]; then
-            openssl x509 -ouform der -in ${SOURCE_CERTIFICATES_DIR}/${cert} -out ${cert//pem/crt}
+        #if [[ "${cert_file}" == *"pem" ]]; then
+        if [ "${extension}" == "pem" ]; then
+            $sudo openssl x509 -ouform der -in ${cert_file} -out ${SOURCE_CERTIFICATES_DIR}/${filename//pem/crt}
         fi
-        if [[ "${cert}" == *"crt" ]]; then
+        #if [[ "${cert_file}" == *"crt" ]]; then
+        if [ "${extension}" == "crt" ]; then
             #$sudo cp root.cert.pem /usr/local/share/ca-certificates/root.cert.crt
-            cert_basename=$(basename $cert)
-            $sudo cp ${SOURCE_CERTIFICATES_DIR}/${cert} ${TARGET_CERTIFICATES_DIR}/$(basename ${cert})
+            # $sudo cp ${SOURCE_CERTIFICATES_DIR}/${cert} ${CERTITICATES_INSTALL_DIR}/${filename}
+            $sudo cp ${cert_file} ${CERTITICATES_INSTALL_DIR}/
         else
             echo "... ignore non-certificate file: $cert"
         fi
     done
-    #$sudo update-ca-certificates
     $sudo ${CERT_COMMAND} ${CMD_OPT}
 }
 setupSystemCertificates 
