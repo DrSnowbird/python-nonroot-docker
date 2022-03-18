@@ -11,7 +11,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
 ARG LIB_DEV_LIST="apt-utils"
 ARG LIB_BASIC_LIST="curl wget unzip ca-certificates"
-ARG LIB_COMMON_LIST="sudo bzip2 git xz-utils unzip vim net-tools" # coreutils gettext pwgen tini;
+ARG LIB_COMMON_LIST="sudo bzip2 git xz-utils unzip vim net-tools"
 ARG LIB_TOOL_LIST="graphviz"
 
 RUN set -eux; \
