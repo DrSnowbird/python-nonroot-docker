@@ -1,24 +1,96 @@
-#!/bin/bash -x
+#!/bin/bash
 
-echo "####################### Components: $(basename $0) ###########################"
+env|sort
+whoami
+id
 
-if [ -s "/usr/bin/sudo" ]; then
-    sudo=sudo
-else
-    sudo=""
+#### Assumptions:
+# 0. Run this file using 'root'
+# 1. Host certificates need to map inside the Container as: /certificates
+# 2. Container OS: Ubuntu/Debian, CentOS/Redhat, Alpine, or unknown
+
+#### ---- Usage ---- ####
+function usage() {
+    echo "Usage setup_system_certificates -d <certificates_dir> [ -h | --help]"
+}
+
+#### ---- Usage ---- ####
+ORIG_ARGS="$*"
+SHORT="hd:i:"
+LONG="help,certificates_dir:,certificates_install_dir:"
+
+# $@ is all command line parameters passed to the script.
+# -o is for short options like -v
+# -l is for long options with double dash like --version
+# the comma separates different long options
+# -a is for long options with single dash like -version
+#OPTIONS=$(getopt --options ${SHORT} --longoptions ${LONG} --name "$0" -a -- "$@")
+OPTIONS=$(getopt -o ${SHORT} -l ${LONG} --name "$0" -a -- "$@")
+
+if [[ $? != 0 ]]; then
+    echo "Arguments Parsing Error! Abort!"
+    exit 1
 fi
+eval set -- "${OPTIONS}"
 
+## Default /certificates
+SOURCE_CERTIFICATES_DIR=${SOURCE_CERTIFICATES_DIR:-/certificates}
+CERTITICATES_INSTALL_DIR=
+
+while true; do
+    case "$1" in
+        -h|--help)
+            usage "Usage setup_system_certificates -d <certificates_dir> [ -h | --help]"
+            ;;
+        -d|--certificates_dir)
+            shift
+            SOURCE_CERTIFICATES_DIR=$1
+            echo -e ">>> SOURCE_CERTIFICATES_DIR=$SOURCE_CERTIFICATES_DIR"
+            ;;
+        -i|--certificates_install_dir)
+            shift
+            CERTITICATES_INSTALL_DIR=$1
+            echo -e ">>> CERTITICATES_INSTALL_DIR=$CERTITICATES_INSTALL_DIR"
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "==================================="
+            echo "*****: input args error"
+            echo ">>> Input args: $ORIG_ARGS"
+            echo ">>> Abort now!"
+            echo "==================================="
+            exit 3
+            ;;
+    esac
+    shift
+done
+
+echo "==================================="
+echo "ORIGINAL INPUT >>>>>>>>>>:"
+echo ">>> Input args: $ORIG_ARGS"
+echo "==================================="
+
+
+echo -e ">>> ==================================="
+echo -e ">>> OS Information:"
+echo -e ">>> ==================================="
 cat /etc/*rel*
+echo -e ">>> ==================================="
 
-find . -name "ca-certificates"
+echo -e ">>> ls command: `which ls`"
 
-if [ "$1" != "" ]; then
-    SOURCE_CERTIFICATES_DIR=${SOURCE_CERTIFICATES_DIR:-$1}
+if [ ! -s ${SOURCE_CERTIFICATES_DIR} ]; then
+    echo -e ">>> **************************************************************************************"
+    echo -e ">>> ERROR: SOURCE_CERTIFICATES_DIR: ${SOURCE_CERTIFICATES_DIR}: NOT Existing/Found! Abort!"
+    echo -e ">>> **************************************************************************************"
+    exit 1
 else
-    SOURCE_CERTIFICATES_DIR=${SOURCE_CERTIFICATES_DIR:-/certificates}
+    echo -e ">>> SOURCE_CERTIFICATES_DIR:"
+    $sudo ls -al ${SOURCE_CERTIFICATES_DIR}
 fi
-
-CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/etc/pki/ca-trust/source/anchors/}
 
 #### ---------------------------------------------------------------------------------------------------------------------------------- ####
 #### ---- (ref: https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself)
@@ -35,56 +107,6 @@ function findMyAbsDir() {
 # findMyAbsDir
 MY_ABS_DIR=$(dirname "$(readlink -f "$0")")
 
-#### ---- Usage ---- ####
-function usage() {
-    echo "Usage setup_system_certificates -d <certificates_dir> [ -h | --help]"
-}
-
-#### ---- Usage ---- ####
-ORIG_ARGS="$*"
-SHORT="hd:"
-LONG="help,certificates_dir:"
-
-# $@ is all command line parameters passed to the script.
-# -o is for short options like -v
-# -l is for long options with double dash like --version
-# the comma separates different long options
-# -a is for long options with single dash like -version
-#OPTIONS=$(getopt --options ${SHORT} --longoptions ${LONG} --name "$0" -a -- "$@")
-OPTIONS=$(getopt -o ${SHORT} -l ${LONG} --name "$0" -a -- "$@")
-
-if [[ $? != 0 ]]; then
-    echo "Arguments Parsing Error! Abort!"
-    exit 1
-fi
-eval set -- "${OPTIONS}"
-
-while true; do
-    case "$1" in
-        -h|--help)
-            usage "Usage setup_system_certificates -d <certificates_dir> [ -h | --help]"
-            ;;
-        -d|--certificates_dir)
-            shift
-            SOURCE_CERTIFICATES_DIR=$1
-            echo "SOURCE_CERTIFICATES_DIR=$SOURCE_CERTIFICATES_DIR"
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            echo "*****: input args error"
-            echo "$ORIG_ARGS"
-            exit 3
-            ;;
-    esac
-    shift
-done
-
-echo "ORIGINAL INPUT >>>>>>>>>>:"
-echo "${ORIG_ARGS}"
-echo "-------------"
 
 #### -------------------------------------------------
 #### OS_TYPE=
@@ -112,7 +134,6 @@ function detectOS_alt() {
         OS_NAME="centos"
         OS_TYPE=2
     fi
- 
 }
 
 
@@ -128,7 +149,7 @@ function detectOS() {
             REPO_CONF=/etc/apt/apt.conf
             ETC_ENV=/etc/environment
             ;;
-        centos*)
+        centos*|fedora*|redhat*)
             OS_TYPE=2
             REPO_CONF=/etc/yum.conf
             ETC_ENV=/etc/environment
@@ -150,9 +171,6 @@ function detectOS() {
 }
 detectOS
 
-#### --------------------------------------------------------------------------------------------
-#### After these steps the new CA is known by system utilities like curl and get. 
-#### Unfortunately, this does not affect most web browsers like Mozilla Firefox or Google Chrome.
 #### -------------------------------------------------------------------------------------------- 
 ## -- CentOS
 # CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/etc/pki/ca-trust/source/anchors}
@@ -175,17 +193,23 @@ detectOS
 #    # update-ca-trust extract # (for CentOS OS)
 #### (Unbunt version)
 #CERTITICATES_INSTALL_DIR=/usr/local/share/ca-certificates/extra
+#### --------------------------------------------------------------------------------------------
+
+#### ---- Targeted OS' Certificates Install Directory: ---- ####
+
+
 if [ $OS_TYPE -eq 1 ]; then
+    # ------------
     # -- Ubuntu --
+    # ------------
     #CERT_COMMAND=`which update-ca-certificates`
     CERT_COMMAND=/usr/sbin/update-ca-certificates
     CMD_OPT=
-    CERTITICATES_INSTALL_DIR=/usr/local/ca-certificates
-    if [ -s /usr/local/share/ca-certificates ]; then
-        CERTITICATES_INSTALL_DIR=/usr/local/share/ca-certificates
-    fi
+    CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/usr/local/share/ca-certificates}
 elif [ $OS_TYPE -eq 2 ]; then
+    # ------------
     # -- CentOS --
+    # ------------
     #CERT_COMMAND=`which update-ca-trust`
     CERT_COMMAND=/usr/bin/update-ca-trust
     #CMD_OPT=extract
@@ -193,15 +217,14 @@ elif [ $OS_TYPE -eq 2 ]; then
     CMD_OPT=
     CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/etc/pki/ca-trust/source/anchors/}
 elif [ $OS_TYPE -eq 3 ]; then
+    # ------------
     # -- Alpine --
+    # ------------
     # https://hackernoon.com/alpine-docker-image-with-secured-communication-ssl-tls-go-restful-api-128eb6b54f1f
     CERT_COMMAND=`which update-ca-certificates`
     #CERT_COMMAND=/usr/sbin/update-ca-certificates
     CMD_OPT=
     CERTITICATES_INSTALL_DIR=${CERTITICATES_INSTALL_DIR:-/usr/local/share/ca-certificates/}
-    if [ -s /usr/local/share/ca-certificates ]; then
-        CERTITICATES_INSTALL_DIR=/usr/local/share/ca-certificates
-    fi
     #CERTIFICATES_FILE=${CERTIFICATES_FILE:-mitre-chain.txt}
     # wget -O mitre-chain.crt --no-check-certificate https://gitlab.mitre.org/mitre-scripts/mitre-pki/raw/master/normalized/mitre-chain.txt
     #wget -O ${CERTIFICATES_FILE} --no-check-certificate https://gitlab.mitre.org/mitre-scripts/mitre-pki/raw/master/normalized/${CERTIFICATES_FILE}
@@ -209,14 +232,17 @@ elif [ $OS_TYPE -eq 3 ]; then
     #cp ${CERTIFICATES_FILE} /usr/local/share/ca-certificates/
     #update-ca-certificates
 else
-    echo "OS_TYPE Unknown! Can't do! Abort!"
+    echo -e ">>> ========================================"
+    echo -e ">>> ERROR: OS_TYPE Unknown! Can't do! Abort!"
+    echo -e ">>> ========================================"
     exit 1
 fi
+
 
 function setupSystemCertificates() {
     echo "================= Setup System Certificates ===================="
     if [ ! -s ${CERTITICATES_INSTALL_DIR} ]; then
-        echo -e "*** CERTITICATES_INSTALL_DIR: ${CERTITICATES_INSTALL_DIR}: Not Found!"
+        echo -e ">>> WARNING: CERTITICATES_INSTALL_DIR: ${CERTITICATES_INSTALL_DIR}: Not Found!"
         $sudo mkdir -p ${CERTITICATES_INSTALL_DIR}
     fi
     if [ -s /etc/ca-certificates/update.d/docker-openjdk ]; then
@@ -226,15 +252,16 @@ function setupSystemCertificates() {
         env | grep -i java
         sudo cat /etc/ca-certificates/update.d/docker-openjdk
     fi
-    ls -al  ${SOURCE_CERTIFICATES_DIR}/*
+    $sudo ls -al  ${SOURCE_CERTIFICATES_DIR}/*
     echo -e ">>> ------------------------------"
-    CERT_FILES=`ls ${SOURCE_CERTIFICATES_DIR}/* | grep 'pem\|crt' | grep -v dummy`
     echo -e ">>> ------------------------------"
     echo -e ">>> /certificates: ${CERT_FILES}"
     echo -e ">>> ------------------------------"
     #for certificate in `$sudo ls ${SOURCE_CERTIFICATES_DIR}/* | grep '*.pem\|*.crt' | grep -v dummy`; do
+    CERT_FILES=`find ${SOURCE_CERTIFICATES_DIR} -type f |grep -v dummy|grep 'crt\|pem'`
     for cert_file in ${CERT_FILES}; do
-        filename=$(basename -- "$certificate")
+        echo -e ">>> Adding Certificate file: ${cert_file}"
+        filename=$(basename -- "$cert_file")
         extension="${filename##*.}"
         ## -- Converting from PEM to CRT: -- ##
         ## openssl x509 -ouform der -in Some-Certificate.pem -out Some-Certificate.crt
