@@ -8,6 +8,7 @@ id
 # 0. Run this file using 'root'
 # 1. Host certificates need to map inside the Container as: /certificates
 # 2. Container OS: Ubuntu/Debian, CentOS/Redhat, Alpine, or unknown
+# 3. Certificates' file name extensions: *.crt, *.pem
 
 #### ---- Usage ---- ####
 function usage() {
