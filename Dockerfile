@@ -1,4 +1,4 @@
-ARG BASE=${BASE:-python:3.9}
+ARG BASE=${BASE:-python:3.10}
 FROM ${BASE}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
@@ -133,9 +133,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
 ##### ---- Docker Entrypoint : ---- #####
 #########################################
 COPY --chown=${USER}:${USER} docker-entrypoint.sh /
-COPY --chown=${USER}:${USER} scripts /scripts
-COPY --chown=${USER}:${USER} certificates /certificates
-RUN /scripts/setup_system_certificates.sh
+#COPY --chown=${USER}:${USER} scripts /scripts
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 ##################################

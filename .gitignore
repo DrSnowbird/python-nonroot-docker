@@ -1,5 +1,6 @@
 **SAVE/
 *.tmp
+*.swp
 
 app/lib/
 app/samples_demo/

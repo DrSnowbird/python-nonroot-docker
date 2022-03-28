@@ -446,7 +446,7 @@ function checkHostVolumePath() {
     _SYS_PATHS="/dev /var /etc"
     if [[ $_SYS_PATHS != *"${_left}"* ]]; then
         sudo chown -R ${USER_ID}:${USER_ID} ${_left}
-        ls -al ${_left}
+        #ls -al ${_left}
     fi
 }
 

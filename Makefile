@@ -105,9 +105,18 @@ pull:
 
 up:
 	docker-compose up -d
+	docker ps | grep $(DOCKER_IMAGE)
+	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 down:
 	docker-compose down
+	docker ps | grep $(DOCKER_IMAGE)
+	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
+
+down-rm:
+	docker-compose down -v --rmi all --remove-orphans
+	docker ps | grep $(DOCKER_IMAGE)
+	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 run:
 	docker run --name=$(DOCKER_NAME) --restart=$(RESTART_OPTION) $(VOLUME_MAP) $(DOCKER_IMAGE):$(VERSION)
@@ -116,7 +125,7 @@ stop:
 	docker stop --name=$(DOCKER_NAME)
 
 status:
-	docker ps
+	docker ps | grep $(DOCKER_NAME)
 
 rmi:
 	docker rmi $$(docker images -f dangling=true -q)
