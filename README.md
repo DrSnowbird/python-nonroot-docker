@@ -52,7 +52,7 @@ make up
 ```
 # Stop Running
 ```
-./stop
+./stop.sh
 or
 make down
 ```
