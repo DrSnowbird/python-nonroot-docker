@@ -34,7 +34,8 @@ RUN $HOME/bin/pre-load-virtualenv.sh && \
 COPY --chown=${USER}:${USER} docker-entrypoint.sh /
 COPY --chown=${USER}:${USER} ${APP_MAIN} ${APP_HOME}/setup.sh
 
-RUN sudo chmod +x /docker-entrypoint.sh ${APP_HOME}/setup.sh 
+RUN sudo chown -R ${USER}:${USER} ${APP_HOME} && \
+    sudo chmod +x /docker-entrypoint.sh ${APP_HOME}/setup.sh 
 
 #########################################
 ##### ---- Docker Entrypoint : ---- #####
