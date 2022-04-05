@@ -102,21 +102,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends sudo curl vim g
 USER ${USER}
 WORKDIR ${HOME}
 
-RUN curl -k https://pyenv.run | bash && \
-    echo "export PYENV_ROOT=\$HOME/.pyenv" >> ~/.bashrc && \
-    echo "export PATH=\$PYENV_ROOT/bin:\$HOME/.local/bin:\$PATH" >> $HOME/.bashrc && \
-    echo "eval \"\$(pyenv init --path)\" " >> $HOME/.bashrc && \
-    echo "eval \"\$(pyenv init -)\" " >> $HOME/.bashrc && \
-    echo "eval \"\$(pyenv virtualenv-init -)\" " >> $HOME/.bashrc && \
-    echo "pyenv virtualenv myvenv" >> $HOME/.bashrc && \
-    echo "pyenv activate myvenv" >> $HOME/.bashrc
-    
-RUN echo "alias venv='pyenv virtualenv'" >> $HOME/.bashrc && \
-    echo "alias activate='pyenv activate'" >> $HOME/.bashrc && \
-    echo "alias deactivate='pyenv deactivate'" >> $HOME/.bashrc && \
-    echo "alias venv-delete='pyenv virtualenv-delete'" >> $HOME/.bashrc
-    
-ENV PYENV_ROOT=${HOME}/.pyenv
+ENV SETUP_PYENV=${SETUP_PYENV:-0}
+RUN if [ ${SETUP_PYENV} -gt 0 ]; then ${SCRIPT_DIR}/setup_system_proxy.sh; fi
 
 RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     mkdir ${HOME}/bin
