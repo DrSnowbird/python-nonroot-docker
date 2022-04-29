@@ -1,4 +1,5 @@
-ARG BASE=${BASE:-python:3.10}
+ARG BASE=${BASE:-python:3.8}
+#ARG BASE=${BASE:-python:3.10}
 FROM ${BASE}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
@@ -41,11 +42,8 @@ RUN ${SCRIPT_DIR}/setup_system_proxy.sh
 ###################################
 ENV USER_ID=${USER_ID:-1000}
 ENV GROUP_ID=${GROUP_ID:-1000}
-
 ENV USER=${USER:-developer}
-
 ENV HOME=/home/${USER}
-
 ENV WORKSPACE=${HOME}/workspace
 
 ENV LANG C.UTF-8
@@ -107,14 +105,19 @@ RUN if [ ${SETUP_PYENV} -gt 0 ]; then ${SCRIPT_DIR}/setup_system_proxy.sh; fi
 
 RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     mkdir ${HOME}/bin
+    
+ENV PATH=${HOME}/.local/bin:${PATH}
 
 ########################################
 #### ---- Set up NVIDIA-Docker ---- ####
 ########################################
 ## ref: https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(Native-GPU-Support)#usage
-ENV TOKENIZERS_PARALLELISM=false
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+## set both NVIDIA_VISIBLE_DEVICES and NVIDIA_VISIBLE_DEVICES with GPU-IDs to control the GPUs available inside the container
+ENV TOKENIZERS_PARALLELISM=${TOKENIZERS_PARALLELISM:-true}
+ENV NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+ENV CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-all}
+ENV NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,video,utility}
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-/usr/local/cudnn/lib64:/usr/local/cuda/lib64:\${LD_LIBRARY_PATH}}
 
 #########################################
 ##### ---- Docker Entrypoint : ---- #####

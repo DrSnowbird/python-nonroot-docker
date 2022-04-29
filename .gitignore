@@ -2,5 +2,10 @@
 *.tmp
 *.swp
 
+#app/requirements*
+
 app/lib/
 app/samples_demo/
+
+app/*copy*
+app/try*

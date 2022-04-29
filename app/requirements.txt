@@ -1,4 +1,12 @@
 requests
 Flask
-#setuptools
-#argparse
+
+setuptools
+argparse
+
+## -- spacy -- ##
+#tensorflow>=2.4.0,<3.0.0
+#spacy>=3.0.0,<4.0.0
+
+## -- spacy + Universal Sentence Encoder
+#https://github.com/MartinoMensio/spacy-universal-sentence-encoder/releases/download/v0.4.3/en_use_md-0.4.3.tar.gz#en_use_md-0.4.3

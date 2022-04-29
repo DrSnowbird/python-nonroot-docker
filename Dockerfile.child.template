@@ -23,10 +23,14 @@ RUN python -u -m pip install --upgrade pip
 ###############################
 COPY --chown=$USER:$USER ./app $HOME/app
 COPY --chown=$USER:$USER ./bin $HOME/bin
-RUN $HOME/bin/pre-load-virtualenv.sh && \
-    if [ -s $HOME/app/requirements.txt ]; then \
+
+#RUN $HOME/bin/pre-load-virtualenv.sh && \
+
+RUN if [ -s $HOME/app/requirements.txt ]; then \
         pip install --no-cache-dir --user -r requirements.txt ; \
-    fi; 
+    fi;
+    
+ENV PATH=${HOME}/.local/bin:${PATH}
     
 #########################################
 ##### ---- Setup: Entry Files  ---- #####
