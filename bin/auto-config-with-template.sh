@@ -176,8 +176,10 @@ for f in $files; do
         if [ ! -d ${target_filename}.BACKUP ]; then
             mkdir -p ${target_filename}.BACKUP
         fi
-        cp ${CP_OPTION} ${target_filename} ${target_filename}.BACKUP/
-        echo "... Old ${target_filename} file is save to: ${target_filename}.BACKUP/"
+        if [ -s ${target_filename} ]; then
+            cp ${CP_OPTION} ${target_filename} ${target_filename}.BACKUP/
+            echo "... Old ${target_filename} file is save to: ${target_filename}.BACKUP/"
+        fi
         #mv ${target_filename} ${target_filename}.BACKUP/${target_filename}_$(date '+%F').SAVE
         # echo "... Old ${target_filename} file is save to: ${target_filename}_$(date '+%F').SAVE"
     fi
