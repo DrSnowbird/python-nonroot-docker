@@ -10,3 +10,6 @@ app/samples_demo/
 
 app/*copy*
 app/try*
+
+\.env
+docker-compose.yml
