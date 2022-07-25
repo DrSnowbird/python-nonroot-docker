@@ -106,7 +106,7 @@ pull:
 ## -- deployment mode (daemon service): -- ##
 up:
 	bin/auto-config-all.sh
-	docker-compose up -d
+	docker-compose up --remove-orphans -d
 	docker ps | grep $(DOCKER_IMAGE)
 	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
