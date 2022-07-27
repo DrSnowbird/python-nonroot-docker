@@ -106,7 +106,12 @@ pull:
 ## -- deployment mode (daemon service): -- ##
 up:
 	bin/auto-config-all.sh
-	docker-compose up --remove-orphans -d
+	@if [ "$(USER_ID)" != "" ] -a [ "$(USER_ID)" != "" ]; then \
+		#sudo chown -R $(USER_ID):$(GROUP_ID) data workspace ; \
+		docker-compose up --remove-orphans -u $(USER_ID):$(GROUP_ID) -d ; \
+	else \
+		docker-compose up --remove-orphans -d ; \
+	fi
 	docker ps | grep $(DOCKER_IMAGE)
 	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 

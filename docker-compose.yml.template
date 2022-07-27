@@ -25,6 +25,7 @@ services:
       #- WINDOW_MANAGER=xfce 
       #- VNC_RESOLUTION=1280x800 
       #- VNC_PW=vncpassword 
+    #{{USER_OPTION}}
     ## -------------------------------
     ## -- Audio sound setup:
     ## -------------------------------

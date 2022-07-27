@@ -101,6 +101,27 @@ echo -e "PORT_MAP=\n${PORTS_MAPPING}"
 sed -i ${SED_MAC_FIX} "s%^.*\#{{PORTS_MAPPING}}%$PORTS_MAPPING%g" ${DOCKER_COMPOSE_FILE}
 
 
+################################################
+#### ---- USER_OPTIONS: Optional setup:---- ####
+################################################
+USER_OPTION=
+function generate_user_ids_options() {
+    #USER_OPTIONS="--user $(id -g):$(id -u)"
+    USER_ID=`cat ${DOCKER_ENV_FILE} | grep  "^USER_ID=" | cut -d'=' -f2 | sed 's/ *$//g'`
+    GROUP_ID=`cat ${DOCKER_ENV_FILE} | grep  "^GROUP_ID=" | cut -d'=' -f2 | sed 's/ *$//g'`
+    if [ "${USER_ID}" != "" ] && [ "${USER_ID}" != "" ]; then
+        USER_DOCKER_RUN_OPTIONS="--user ${USER_ID:-$(id -g)}:${GROUP_ID:-$(id -u)}"
+        USER_DOCKER_COMPOSE_ATTRIBUTE="${USER_ID}:${GROUP_ID}"
+        echo -e "================> docker-compose user attribute: ${USER_DOCKER_COMPOSE_ATTRIBUTE}"
+        sed -i ${SED_MAC_FIX} "s%\#{{USER_OPTION}}%user: $USER_DOCKER_COMPOSE_ATTRIBUTE%g" ${DOCKER_COMPOSE_FILE}
+    else
+        echo -e "................. skip: docker-compose user attribute: ${USER_DOCKER_COMPOSE_ATTRIBUTE}"
+        sed -i ${SED_MAC_FIX} "s%^.*\#{{USER_OPTION}}.*% %g" ${DOCKER_COMPOSE_FILE}
+    fi
+}
+generate_user_ids_options
+
+
 ###########################################################
 #### ---- Function: docker-compose: volumes mappings  ----
 ####      (Don't change!)
