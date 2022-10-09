@@ -1,7 +1,7 @@
 **SAVE/
 **BACKUP*/
-*.tmp
-*.swp
+*tmp
+*swp
 
 #app/requirements*
 
