@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash 
 
 #### ------------------------------------- ####
 #### ---- Docker:Generate:New Porject ---- ####
@@ -9,9 +9,9 @@
 
 function usage() {
     if [ $# -lt 1 ]; then
-        echo "-- Usage: $(basename $0) <New-Docker-Project-Directory> "
+        echo "-- Usage: $0 <New-Docker-Project-Directory> "
         echo "e.g."
-        echo "    $(basename $0) ~/Docker-Projects/My-New-Docker"
+        echo "    $0 ~/Docker-Projects/My-New-Docker"
         echo "(Note) New Docker project name can only be ALL-lower-cased"
         echo "       This is due to the constaints from Docker Engine!"
         exit 1

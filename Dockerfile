@@ -119,11 +119,17 @@ ENV CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-all}
 ENV NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,video,utility}
 ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-/usr/local/cudnn/lib64:/usr/local/cuda/lib64:\${LD_LIBRARY_PATH}}
 
+###############################
+#### ---- App: (ENV)  ---- ####
+###############################
+ENV APP_HOME=${APP_HOME:-$HOME/app}
+ENV APP_MAIN=${APP_MAIN:-setup.sh}
+
 #########################################
 ##### ---- Docker Entrypoint : ---- #####
 #########################################
 COPY --chown=${USER}:${USER} docker-entrypoint.sh /
-#COPY --chown=${USER}:${USER} scripts /scripts
+COPY --chown=${USER}:${USER} ${APP_MAIN} ${APP_HOME}/setup.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 ##################################

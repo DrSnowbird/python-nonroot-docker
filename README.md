@@ -1,4 +1,4 @@
-# Python 3 (v3.10 latest) Base Container with Non-Root User setup
+# Python 3 (default v3.8) Base Container with Non-Root User setup
 * A Python 3 base Container with `no root access` (except using `sudo ...` and you can remove it using `sudo apt-get remove sudo` to protect your Container). 
 ```
 If [ you are looking for such a common requirement for a base Container ]:
@@ -12,9 +12,8 @@ If [ you are looking for such a common requirement for a base Container ]:
 ##### (**Safety**) `Non-root access inside Container`
 * For deployment, you can disable it for security with (`sudo apt-get remove -y sudo`)
 
-
 # Components:
-* Python 3 (v3.10) base image + pyenv
+* Python 3 (default v3.8) base image + pyenv
 * Auto detect HOST's GPU/CUDA to enable Container accessing GPU
 * No root setup: using /home/developer 
   * It has sudo for dev phase usage. You can "sudo apt-get remove sudo" to finalize the product image.
@@ -71,7 +70,12 @@ FROM openkbs/python-nonroot-docker
 ```
 
 # Quick commands
-* Makefile - makefile for build, run, down, etc.
+* Makefile - makefile for build, run, down, etc., e.g.:
+    ```
+    make build
+    make up
+    make down
+    ```
 * build.sh - build local image
 * logs.sh - see logs of container
 * run.sh - run the container
@@ -147,5 +151,30 @@ or, explicitly disable GPU to use CPU.
 # Create your own image from this
 ```
 FROM openkbs/python-nonroot-docker
+```
+
+# Release versions for components
+```
+developer@192:~$ /usr/scripts/printVersions.sh 
+JAVA_HOME=
+java:
+
+/usr/local/bin/python
+Python 3.8.13
+/usr/local/bin/python3
+Python 3.8.13
+/usr/local/bin/pip
+pip 22.0.4 from /usr/local/lib/python3.8/site-packages/pip (python 3.8)
+/usr/local/bin/pip3
+pip 22.0.4 from /usr/local/lib/python3.8/site-packages/pip (python 3.8)
+PRETTY_NAME="Debian GNU/Linux 11 (bullseye)"
+NAME="Debian GNU/Linux"
+VERSION_ID="11"
+VERSION="11 (bullseye)"
+VERSION_CODENAME=bullseye
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
 ```
 
