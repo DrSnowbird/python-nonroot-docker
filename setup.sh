@@ -184,8 +184,28 @@ verifyFile $APP_RUN_MAIN
 cd ${APP_RUN_DIR} 
 ls -al 
 
+function run_2nd__cmd() {
+    #### ---- RUN Flask REST Server: ----
+    # APP_RUN_2nd_CMD=FLASK_OR_GRADIO=flask python3 flask_server.py
+    #  APP_RUN_2nd_CMD="FLASK_OR_GRADIO=flask && python3 text-summary-gradio.py"
+    runCommands ${APP_RUN_DIR} ${APP_RUN_2nd_CMD}
+    sleep 5
+}
+if [[ -v APP_RUN_2nd_CMD ]] ; then
+    run_2nd__cmd &
+fi
+
+# FLASK_OR_GRADIO=flask && python3 text-summary-gradio.py
+# FLASK_OR_GRADIO=gradio && python3 text-summary-gradio.py
+
 #### ---- RUN Application ----
 ## e.g. Java Jar file
 ## cd ${APP_HOME}/dist && java -jar my_jar.jar
 runCommands ${APP_RUN_DIR} ${APP_RUN_CMD}
 
+#
+## Wait for any process to exit
+#wait -n
+#
+## Exit with status of process that exited first
+#exit $?

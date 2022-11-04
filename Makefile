@@ -135,7 +135,8 @@ run:
 	@if [ ! -s .env ]; then \
 		bin/auto-config-all.sh; \
 	fi
-	docker run --name=$(DOCKER_NAME) --restart=$(RESTART_OPTION) $(VOLUME_MAP) $(DOCKER_IMAGE):$(VERSION)
+	./run.sh
+	#docker run --name=$(DOCKER_NAME) --restart=$(RESTART_OPTION) $(VOLUME_MAP) $(DOCKER_IMAGE):$(VERSION)
 
 stop:
 	docker stop --name=$(DOCKER_NAME)
