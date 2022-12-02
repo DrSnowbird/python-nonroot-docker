@@ -106,6 +106,8 @@ RUN if [ ${SETUP_PYENV} -gt 0 ]; then ${SCRIPT_DIR}/setup_system_proxy.sh; fi
 RUN sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     mkdir ${HOME}/bin
     
+RUN python3 -m pip install --upgrade pip
+
 ENV PATH=${HOME}/.local/bin:${PATH}
 
 ########################################
