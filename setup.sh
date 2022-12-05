@@ -81,6 +81,9 @@ function verifyCommand() {
     if [ "$1" == "" ]; then
         return
     fi
+    if [ "$1" == "cmd" ] || [ "$1" == "exec" ]; then
+        return
+    fi
     if [ ! `which $1` ]; then
         echo "*** ERROR ***: NOT_FOUND: App's mandatory tool: $1: Can't continue! Abort!"
         exit 1
