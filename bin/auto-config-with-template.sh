@@ -41,7 +41,7 @@ CONTAINER_NAME=$(basename $PROJ_DIR)
 ## -----------------------
 ## -- HOSt TimeZone:   --
 ## -----------------------
-DOCKER_HOST_TIMEZONE=$(cat /etc/timezone)
+#DOCKER_HOST_TIMEZONE=$(cat /etc/timezone)
 DOCKER_HOST_TIMEZONE=${DOCKER_HOST_TIMEZONE:-UTC}
 
 ## -----------------------
