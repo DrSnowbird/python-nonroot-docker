@@ -58,19 +58,20 @@ services:
     # ports:
     #   - "12345:12345"
     #{{PORTS_MAPPING}}
+
     ## -----------------------------
     ## -- Network setup if needed --
     ## -----------------------------
     # networks:
-    #  - dev_network
+    #   {{DOCKER_NETWORK}}:
+    #     priority: 1000
 
 #volumes:
 #    {{CONTAINER_NAME}}_volume:
 #        external: false
 
 #networks:
-#  dev_network:
+#  {{DOCKER_NETWORK}}:
 #    external:
-#      name: dev_network
-
+#      name: {{DOCKER_NETWORK}}
 

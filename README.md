@@ -43,6 +43,29 @@ If [ you are looking for such a common requirement for a base Container ]:
     ```
 * Step-2: That's it! (Done!) Let the automation scripts chained by Dockerfile for building and running your local version of Container instance behind your Corporate Networks.
 
+# Network (optional)
+1. Use the following command to create 'docker network' to create "my_network_01":
+```
+export DOCKER_NETWORK=my_network_01;
+make network
+bin/auto-config-all.sh
+```
+
+2. To use the above your own customized network, you need to uncomment and modify './docker-compose.yml.template' which are "#" commented out at the very bottom of the file. For example, the "dev_network_01" -- (remember to use 'DOCKER_NETWORK=my_network_01' to automation to synchronize all related files! and don't change anything else especially the 'double-brace' meta variables!):
+``` (./docker_compose.yml)
+    ## -----------------------------
+    ## -- Network setup if needed --
+    ## -----------------------------
+    networks:
+      {{DOCKER_NETWORK}}:
+        priority: 1000
+
+networks:
+  {{DOCKER_NETWORK}}:
+    external:
+      name: {{DOCKER_NETWORK}}
+```
+      
 # Run (recommended for easy-start)
 ```
 ./run.sh

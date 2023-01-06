@@ -48,6 +48,9 @@ DOCKER_IMAGE := $(ORGANIZATION)/$(DOCKER_NAME)
 #VOLUME_MAP := "-v $${PWD}/data:/home/developer/data -v $${PWD}/workspace:/home/developer/workspace"
 VOLUME_MAP := 
 
+## -- Network: -- ##
+DOCKER_NETWORK=$(shell echo $${DOCKER_NETWORK:-dev_network})
+
 # -- Local SAVE of image --
 IMAGE_EXPORT_PATH := "$${PWD}/archive"
 
@@ -106,6 +109,11 @@ pull:
 	else \
 		docker pull $(REGISTRY_IMAGE):$(VERSION) ; \
 	fi
+
+network:
+	echo -e ">>> ==================== network: ======================"
+	docker network create --driver bridge ${DOCKER_NETWORK}
+	docker network ls
 
 ## -- deployment mode (daemon service): -- ##
 up:
