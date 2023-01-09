@@ -36,7 +36,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 PROJ_DIR=$(dirname $DIR)
 
-CONTAINER_NAME=$(basename $PROJ_DIR)
+CONTAINER_NAME=`echo $(basename $PROJ_DIR)|tr '[:upper:]' '[:lower:]'|tr "/: " "_" `
 
 ## -----------------------
 ## -- HOSt TimeZone:   --
