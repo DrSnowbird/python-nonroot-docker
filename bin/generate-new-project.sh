@@ -46,8 +46,17 @@ function setupDestDir() {
 }
 setupDestDir ${DEST_PROJ_DIR}
 
-CHILD_CONTAINER=`echo "$(basename ${DEST_PROJ_DIR})" | tr '[:upper:]' '[:lower:]' `
+DEST_DESIRED_DIR=${1:-$HOME/docker-generated}
+DEST_DESIRED_DIR=$(realpath ${DEST_DESIRED_DIR})
+DEST_BASE_DIR=`echo "$(basename $DEST_DESIRED_DIR)"`
+CHILD_CONTAINER=`echo "$(basename ${DEST_BASE_DIR})" | tr '[:upper:]' '[:lower:]' `
+DEST_PROJ_DIR=$(dirname $DEST_DESIRED_DIR)/${DEST_BASE_DIR}
 PARENT_CONTAINER=$(basename ${SRC_PROJ_DIR})
+if [ ! -s ${DEST_PROJ_DIR} ]; then
+    mkdir -p ${DEST_PROJ_DIR}
+else
+    echo "... existing target/destination Project directory: ${DEST_PROJ_DIR}"
+fi
 
 echo "--- Auto convert the project name to 'Lower-cased' to due Docker Container naming convention enforce by Docker Engine"
 
