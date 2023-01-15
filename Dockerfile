@@ -6,6 +6,11 @@ MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
 
 ENV DEBIAN_FRONTEND noninteractive
 
+############################################
+#### ---- CA-Certifcates variable: ---- ####
+############################################
+ENV REQUESTS_CA_BUNDLE=${REQUESTS_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}
+
 ##################################
 #### ---- Tools: setup   ---- ####
 ##################################
@@ -36,11 +41,6 @@ COPY ./scripts ${SCRIPT_DIR}
 COPY certificates /certificates
 RUN ${SCRIPT_DIR}/setup_system_certificates.sh
 RUN ${SCRIPT_DIR}/setup_system_proxy.sh
-
-############################################
-#### ---- CA-Certifcates variable: ---- ####
-############################################
-ENV REQUESTS_CA_BUNDLE=${REQUESTS_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}
 
 ###################################
 #### ---- user: developer ---- ####
