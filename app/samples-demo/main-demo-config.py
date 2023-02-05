@@ -39,14 +39,14 @@ def main():
     # ----------------
     config_yaml_remote = ConfigInfo(config_type='ConfigFromYamlRemote',
                                     remote_url='http://abdn-vm-166:18080/jetty_base/yaml',
-                                    config_object_uid='recast_config_LOCAL_abdn-vm-166.mitre.org.yaml',
+                                    config_object_uid='recast_config_LOCAL_vm-166.openkbs.org.yaml',
                                     priority=7)
     # ----------------
     # -- priority=5 --
     # ----------------
     config_json_remote = ConfigInfo(config_type='ConfigFromRemote',
-                                    remote_url='http://abdn-vm-155.mitre.org:3000/',
-                                    config_object_uid='recast_config_LOCAL_abdn-vm-166.mitre.org',
+                                    remote_url='http://vm-155.openkbs.org:3000/',
+                                    config_object_uid='recast_config_LOCAL_vm-166.openkbs.org',
                                     priority=5)
     # ----------------
     # -- priority=3 --
@@ -77,7 +77,7 @@ def main():
 
     # ------------------------------------------------------------------------------------------------------------
     # -- Demo: read both JSON (priority=1) and YAML files and YAML files (priority=3) -- see above code lines:  --
-    # -- Priority: YAML's value '10.128.9.166' will overwirte JSON's value 'abdn-vm-166.mitre.org'              --
+    # -- Priority: YAML's value '10.128.9.166' will overwirte JSON's value 'vm-166.openkibs.org'              --
     # -- Results: Key/value: /recastapp/kafka/host=10.128.9.166                                                 --
     # ------------------------------------------------------------------------------------------------------------
     path = "/recastapp/kafka/host"
