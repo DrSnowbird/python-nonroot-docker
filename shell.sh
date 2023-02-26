@@ -10,6 +10,9 @@ if [ $# -lt 1 ]; then
 fi
 
 CMD=$*
+if [ $# -lt 1 ]; then
+    CMD=/bin/bash
+fi
 
 ###################################################
 #### ---- Change this only to use your own ----
