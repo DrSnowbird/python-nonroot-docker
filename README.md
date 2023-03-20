@@ -85,7 +85,7 @@ bin/generate-new-project.sh <folder_for_your_APP>
 e.g.
 bin/generate-new-project.sh ../my-app-docker
 ```
-That's it! It will automatically create a fully (literally!) complete APP-Container project folder with everything from build, run, Makefile (for make buil, make up, or make down, etc.)
+That's it! It will automatically create a fully (literally!) complete APP-Container project folder with everything from build, run, Makefile (for make build, make up, or make down, etc.)
 
 # Create your own image from this
 ```
