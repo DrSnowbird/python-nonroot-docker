@@ -173,7 +173,7 @@ MORE_OPTIONS=
 
 NVIDIA_DOCKER_AVAILABLE=0
 function check_NVIDIA() {
-    NVIDIA_PCI=`lspci | grep controller | grep -i NVIDIA`
+    NVIDIA_PCI=`lspci | grep -i NVIDIA`
     if [ "$NVIDIA_PCI" == "" ]; then
         echo "---- No Nvidia PCI found! No Nvidia/GPU physical card(s) available! Use CPU only!"
         GPU_OPTION=
@@ -206,7 +206,7 @@ if [ ${IS_TO_RUN_GPU} -gt 0 ]; then
     #   docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 ...
     # -ipc=host --ulimit memlock=-1 --ulimit stack=67108864
     GPU_OPTION="${GPU_OPTION} --ulimit memlock=-1 --ulimit stack=67108864 "
-    echo "GPU_OPTION= ${GPU_OPTION}"
+    echo ">>>> GPU_OPTION= ${GPU_OPTION}"
 fi
 echo "$@"
 
