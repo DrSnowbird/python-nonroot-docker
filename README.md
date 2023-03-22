@@ -43,6 +43,13 @@ If [ you are looking for such a common requirement for a base Container ]:
     ```
 * Step-2: That's it! (Done!) Let the automation scripts chained by Dockerfile for building and running your local version of Container instance behind your Corporate Networks.
 
+# Quick Test GPU / Nvidia
+```
+docker-compose run python-nonroot-docker /usr/bin/nvidia-smi
+or
+./run.sh /usr/bin/nvidia-smi
+```
+
 # Network (optional)
 1. Use the following command to create 'docker network' to create "my_network_01":
 ```

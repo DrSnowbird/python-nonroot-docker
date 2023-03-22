@@ -4,6 +4,13 @@ services:
   {{CONTAINER_NAME}}:
     container_name: {{CONTAINER_NAME}}
     image: {{ORG_NAME}}/{{CONTAINER_NAME}}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     build:
       context: .
       dockerfile: Dockerfile
