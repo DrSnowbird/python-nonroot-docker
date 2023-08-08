@@ -1,5 +1,5 @@
-ARG BASE=${BASE:-python:3.8}
-#ARG BASE=${BASE:-python:3.10}
+#ARG BASE=${BASE:-python:3.8}
+ARG BASE=${BASE:-python:3.10}
 FROM ${BASE}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"

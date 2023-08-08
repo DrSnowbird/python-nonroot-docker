@@ -10,11 +10,17 @@
 *.zip
 *.tar
 
+# temporary files #
 **SAVE/
 **BACKUP*/
 *.tmp
 *.swp
-
+*.log
+*.swp
+*.tmp
+.fuse*
+*.zip*
+data/
 #app/requirements*
 
 app/lib/

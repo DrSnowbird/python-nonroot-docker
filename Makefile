@@ -57,7 +57,7 @@ IMAGE_EXPORT_PATH := "$${PWD}/archive"
 # { no, on-failure, unless-stopped, always }
 RESTART_OPTION := always
 
-SHA := $(shell git describe --match=NeVeRmAtCh --always --abbrev=40 --dirty=*)
+#SHA := $(shell git describe --match=NeVeRmAtCh --always --abbrev=40 --dirty=*)
 
 TIME_START := $(shell date +%s)
 
@@ -71,14 +71,14 @@ debug:
 
 default: build
 
-build-time:
-	docker build \
-	--build-arg BASE_IMAGE="$(BASE_IMAGE)" \
-	--build-arg CIRCLE_SHA1="$(SHA)" \
-	--build-arg version=$(VERSION) \
-	--build-arg VCS_REF=`git rev-parse --short HEAD` \
-	--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-	-t $(DOCKER_IMAGE):$(VERSION) .
+#build-time:
+#	docker build \
+#	--build-arg BASE_IMAGE="$(BASE_IMAGE)" \
+#	--build-arg CIRCLE_SHA1="$(SHA)" \
+#	--build-arg version=$(VERSION) \
+#	--build-arg VCS_REF=`git rev-parse --short HEAD` \
+#	--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+#	-t $(DOCKER_IMAGE):$(VERSION) .
 
 build-rm:
 	docker build --force-rm --no-cache \

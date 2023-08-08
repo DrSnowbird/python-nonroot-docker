@@ -15,6 +15,8 @@ ENV APP_MAIN=${APP_MAIN:-setup.sh}
 #################################
 #### ---- App: (common) ---- ####
 #################################
+COPY --chown=$USER:$USER ./app $HOME/app
+
 WORKDIR ${APP_HOME}
 RUN python -u -m pip install --upgrade pip
 
