@@ -1,4 +1,4 @@
-# Python 3 (default v3.8) Base Container with Non-Root User setup
+# Python 3 (default v3.12) Base Container with Non-Root User setup
 * A Python 3 base Container with `no root access` (except using `sudo ...` and you can remove it using `sudo apt-get remove sudo` to protect your Container). 
 ```
 If [ you are looking for such a common requirement for a base Container ]:
@@ -6,6 +6,7 @@ If [ you are looking for such a common requirement for a base Container ]:
 ```
 
 # Key Features
+##### (**NEW**) `Build multi-versions of Python, e.g., 3.12, 3.11, 3.10, ... etc.`
 ##### (**NEW**) `Auto detect & enable GPU/CUDA`
 ##### (**NEW**) `Auto Corporate Proxy/SSL Certficates setup`
 ##### (**NEW**) `Auto APP Container project creation`
@@ -13,13 +14,17 @@ If [ you are looking for such a common requirement for a base Container ]:
 * For deployment, you can disable it for security with (`sudo apt-get remove -y sudo`)
 
 # Components:
-* Python 3 (default v3.8) base image + pyenv
+* Python 3 (`default v3.12`) base image + pyenv
 * Auto detect HOST's GPU/CUDA to enable Container accessing GPU
 * No root setup: using /home/developer 
   * It has sudo for dev phase usage. You can "sudo apt-get remove sudo" to finalize the product image.
   * Note, you should consult Docker security experts in how to secure your Container for your production use!)
 
 # Build (`Do this first!`)
+* To build multi-versions of Pythons, update the Makefile property as:
+    ```
+    BUILD_VERSIONS=3.12 3.11 3.10 3.9 3.8
+    ```
 * Due to Docker Hub not allowing free hosting services of pre-built images, you have to make local build to use in your environment
     ```
     make build
@@ -78,6 +83,11 @@ networks:
 ./run.sh
 or,
 make up
+```
+# Run Different Python Version
+* Example below will run `python:3.12` image to enter the `bash`
+```
+./run.sh -t openkbs/python-nonroot-docker:3.12 bash
 ```
 # Stop Running
 ```
@@ -190,18 +200,23 @@ JAVA_HOME=
 java:
 
 /usr/local/bin/python
-Python 3.8.13
+Python 3.12.2
 /usr/local/bin/python3
-Python 3.8.13
+Python 3.12.2
 /usr/local/bin/pip
-pip 22.0.4 from /usr/local/lib/python3.8/site-packages/pip (python 3.8)
+pip 24.0 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
 /usr/local/bin/pip3
-pip 22.0.4 from /usr/local/lib/python3.8/site-packages/pip (python 3.8)
-PRETTY_NAME="Debian GNU/Linux 11 (bullseye)"
+pip 24.0 from /usr/local/lib/python3.12/site-packages/pip (python 3.12)
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
 NAME="Debian GNU/Linux"
-VERSION_ID="11"
-VERSION="11 (bullseye)"
-VERSION_CODENAME=bullseye
+VERSION_ID="12"
+VERSION="12 (bookworm)"
+VERSION_CODENAME=bookworm
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+
 ID=debian
 HOME_URL="https://www.debian.org/"
 SUPPORT_URL="https://www.debian.org/support"

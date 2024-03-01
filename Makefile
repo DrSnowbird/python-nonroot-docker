@@ -41,6 +41,8 @@ VERSION?="$(APP_VERSION)"
 ## -- Uncomment this to use local Registry Host --
 DOCKER_IMAGE := $(ORGANIZATION)/$(DOCKER_NAME)
 
+BUILD_VERSIONS=3.12 3.9
+
 ## -- To Check syntax:
 #  cat -e -t -v Makefile
 
@@ -83,11 +85,14 @@ default: build
 build-rm:
 	docker build --force-rm --no-cache \
 		-t $(DOCKER_IMAGE):$(VERSION) .
+	docker images | grep $(DOCKER_IMAGE)
+	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 build:
-	docker build \
-	    -t $(DOCKER_IMAGE):$(VERSION) .
-	docker images | grep $(DOCKER_IMAGE)
+	for ver in $(BUILD_VERSIONS); do \
+		echo ">>> Python version: $$ver"; \
+		docker build -t $(DOCKER_IMAGE):$$ver --build-arg PYTHON_VERSION=$$ver .  ; \
+	done
 	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 push:
@@ -129,6 +134,7 @@ up:
 	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 down:
+	./stop.sh
 	docker-compose down
 	#docker ps | grep $(DOCKER_IMAGE)
 	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
@@ -144,6 +150,7 @@ run:
 		bin/auto-config-all.sh; \
 	fi
 	./run.sh
+	docker ps | grep $(DOCKER_IMAGE)
 	#docker run --name=$(DOCKER_NAME) --restart=$(RESTART_OPTION) $(VOLUME_MAP) $(DOCKER_IMAGE):$(VERSION)
 
 stop:

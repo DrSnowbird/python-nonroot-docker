@@ -1,6 +1,7 @@
 #ARG BASE=${BASE:-python:3.8}
-ARG BASE=${BASE:-python:3.10}
-FROM ${BASE}
+#ARG BASE=${BASE:-python:3.9}
+ARG PYTHON_VERSION=${PYTHON_VERSION:-python:3.12}
+FROM python:${PYTHON_VERSION}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
 
