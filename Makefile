@@ -41,7 +41,9 @@ VERSION?="$(APP_VERSION)"
 ## -- Uncomment this to use local Registry Host --
 DOCKER_IMAGE := $(ORGANIZATION)/$(DOCKER_NAME)
 
-BUILD_VERSIONS=3.12 3.9
+# -- Build Multi image versions: --
+# -- Only the last value will be designated as the ":latest" tag!
+BUILD_VERSIONS=3.9 3.12
 
 ## -- To Check syntax:
 #  cat -e -t -v Makefile
@@ -83,22 +85,26 @@ default: build
 #	-t $(DOCKER_IMAGE):$(VERSION) .
 
 build-rm:
-	docker build --force-rm --no-cache \
-		-t $(DOCKER_IMAGE):$(VERSION) .
+	for ver in $(BUILD_VERSIONS); do \
+		echo ">>> Python version: $$ver"; \
+		docker build --force-rm --no-cache -t $(DOCKER_IMAGE):$$ver --build-arg PYTHON_VERSION=$$ver .  ; \
+		docker build --force-rm --no-cache -t $(DOCKER_IMAGE) --build-arg PYTHON_VERSION=$$ver .  ; \
+	done
 	docker images | grep $(DOCKER_IMAGE)
 	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 build:
 	for ver in $(BUILD_VERSIONS); do \
-		echo ">>> Python version: $$ver"; \
+		echo ... Python: $$ver ; \
 		docker build -t $(DOCKER_IMAGE):$$ver --build-arg PYTHON_VERSION=$$ver .  ; \
+		docker build -t $(DOCKER_IMAGE) --build-arg PYTHON_VERSION=$$ver .  ; \
 	done
+	docker images | grep $(DOCKER_IMAGE)
 	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 push:
 	docker commit -m "$comment" ${containerID} ${imageTag}:$(VERSION)
 	docker push $(DOCKER_IMAGE):$(VERSION)
-
 	docker tag $(imageTag):$(VERSION) $(REGISTRY_IMAGE):$(VERSION)
 	#docker tag $(imageTag):latest $(REGISTRY_IMAGE):latest
 	docker push $(REGISTRY_IMAGE):$(VERSION)

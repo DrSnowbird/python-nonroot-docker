@@ -365,7 +365,8 @@ PACKAGE="${imageTag##*/}"
 #########################################################################################################
 ######################## DON'T CHANGE LINES STARTING BELOW (unless you need to) #########################
 #########################################################################################################
-LOCAL_VOLUME_DIR="${baseDataFolder}/${PACKAGE}"
+LOCAL_VOLUME_DIR="${baseDataFolder}/${DOCKER_IMAGE_REPO}"
+echo -e "LOCAL_VOLUME_DIR=${LOCAL_VOLUME_DIR}"
 ## -- Container's internal Volume base DIR
 DOCKER_VOLUME_DIR="/home/developer"
 
@@ -435,7 +436,7 @@ function hasPattern() {
 DEBUG=0
 function debug() {
     if [ $DEBUG -gt 0 ]; then
-        echo $*
+        echo -e "$*"
     fi
 }
 
@@ -473,12 +474,15 @@ function generateVolumeMapping() {
         ## -- Otherwise, go lookup the docker.env as ride-along source for volume definitions
         VOLUMES_LIST=`cat ${DOCKER_ENV_FILE}|grep "^#VOLUMES_LIST= *"|sed "s/[#\"]//g"|cut -d'=' -f2-`
     fi
+    debug "VOLUMES_LIST: $VOLUMES_LIST"
+    
     for vol in $VOLUMES_LIST; do
         echo
-        echo -e "\n>>>>>>>>> $vol"
+        debug "\n>>>>> (VOLUMES_LIST) >>>> $vol"
         hasColon=`echo $vol|grep ":"`
         ## -- allowing change local volume directories --
         if [ "$hasColon" != "" ]; then
+            debug ">>> hasColon ..."
             if [ "`echo $vol|grep 'volume-'`" != "" ]; then
                 cutomizedVolume $vol
             else
@@ -534,6 +538,7 @@ function generateVolumeMapping() {
                 fi
             fi
         else
+            debug ">>> No: hasColon ..."
             volHasDot=`echo $vol|grep "^\./"`
             if [ "$volHasDot" != "" ]; then
                 ## has "./data" alone 
@@ -913,7 +918,6 @@ fi
 ##################################################
 echo ">>> (final) ENV_VARS=${ENV_VARS}"
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-echo -e ">>> (final) ENV_VARS=${ENV_VARS}"
 
 MORE_OPTIONS="${MORE_OPTIONS} ${HOSTS_OPTIONS} "
 
