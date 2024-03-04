@@ -128,7 +128,7 @@ network:
 
 ## -- deployment mode (daemon service): -- ##
 up:
-	bin/auto-config-all.sh
+	export ORG_NAME=$(ORGANIZATION) && bin/auto-config-all.sh
 	#if [ "$(USER_ID)" != "" ] && [ "$(USER_ID)" != "" ]; then \
 	#	sudo chown -R $(USER_ID):$(GROUP_ID) data workspace ; \
 	#	docker-compose up --remove-orphans -u $(USER_ID):$(GROUP_ID) -d ; \
