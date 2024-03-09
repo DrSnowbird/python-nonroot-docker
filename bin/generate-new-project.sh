@@ -138,6 +138,12 @@ function cloneProject() {
         echo -e "--- INFO: Can't find template child Dockerfile: ${DEST_PROJ_DIR}/Dockerfile.child.template!"
         echo -e "--- INFO: Instead, use the parent Dockerfile as source."
     fi
+    
+    # -- Remove multiple versions for child container:
+    echo -e "--- Replace BUILD_VERSIONS=3.9 3.12 with BUILD_VERSIONS=latest"
+    ${DEST_PROJ_DIR}/bin/replace-key-value-config.sh ${DEST_PROJ_DIR}/Makefile "BUILD_VERSIONS" "latest"
+    cat ${DEST_PROJ_DIR}/Makefile | grep -e "BUILD_VERSIONS="
+
     ## ----------------------------------------------------------
     ## -- Remove .git: --
     ## ----------------------------------------------------------
@@ -157,6 +163,7 @@ testBuildAndRun
 
 echo "-------------------------------- SUCCESS --------------------------------"
 echo "  Generate a new Docker Project: "
+docker images |grep ${CHILD_CONTAINER}
 echo "     - ${DEST_PROJ_DIR}"
 echo "  Status:  "
 echo "     - Tested BUILD and RUN: OK"
