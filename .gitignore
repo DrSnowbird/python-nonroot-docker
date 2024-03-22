@@ -31,3 +31,6 @@ app/try*
 
 \.env
 docker-compose.yml
+
+**/tmp/
+
